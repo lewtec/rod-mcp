@@ -1,6 +1,8 @@
 package types
 
 import (
+	"os"
+
 	"github.com/aliwatters/rod-mcp/utils"
 	"github.com/charmbracelet/log"
 	"gopkg.in/natefinch/lumberjack.v2"
@@ -41,15 +43,14 @@ func InitLogger(config LoggerConfig) {
 	log.SetReportCaller(true)
 
 	if config.LoggerFileName != "" {
-		loggerFile := lumberjack.Logger{
+		log.SetOutput(&lumberjack.Logger{
 			Filename:   config.LoggerFileName,
 			MaxSize:    config.LoggerFileMaxSize,
 			MaxAge:     config.LoggerFileMaxAge,
 			MaxBackups: config.LoggerFileMaxBackups,
-		}
-
-		log.SetOutput(&loggerFile)
-
+		})
+	} else {
+		log.SetOutput(os.Stderr)
 	}
 
 	if config.LoggerPrefix != "" {

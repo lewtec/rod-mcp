@@ -68,8 +68,8 @@ func TestDataDirDerivesLogProfileOutputAndBrowser(t *testing.T) {
 	if cfg.DataDir != "/tmp/rod-data" {
 		t.Fatalf("DataDir = %q, want /tmp/rod-data", cfg.DataDir)
 	}
-	if cfg.LoggerConfig.LoggerFileName != "/tmp/rod-data/server.log" {
-		t.Fatalf("LoggerFileName = %q", cfg.LoggerConfig.LoggerFileName)
+	if cfg.LoggerConfig.LoggerFileName != "" {
+		t.Fatalf("LoggerFileName = %q, want empty (stderr)", cfg.LoggerConfig.LoggerFileName)
 	}
 	if cfg.OutputDir != "/tmp/rod-data/output" {
 		t.Fatalf("OutputDir = %q", cfg.OutputDir)
