@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -36,7 +35,7 @@ func main() {
 	defer func() {
 		err := runner.Close()
 		if err != nil {
-			slog.Error(fmt.Sprintf("Server close error: %s", err))
+			slog.Error("server close", "err", err)
 		}
 	}()
 	return

@@ -72,7 +72,7 @@ func waitDOMStable(page *rod.Page, timeout ...time.Duration) {
 		waitTimeout = timeout[0]
 	}
 	if err := page.Timeout(waitTimeout).WaitDOMStable(defaultWaitStableDur, defaultDomDiff); err != nil {
-		slog.Debug(fmt.Sprintf("WaitDOMStable: %s", err))
+		slog.Debug("WaitDOMStable", "err", err)
 	}
 }
 

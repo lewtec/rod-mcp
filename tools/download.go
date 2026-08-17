@@ -122,9 +122,9 @@ var (
 				safeName := filepath.Base(result.filename)
 				candidate := filepath.Clean(filepath.Join(outDir, safeName))
 				if !strings.HasPrefix(candidate, filepath.Clean(outDir)+string(os.PathSeparator)) {
-					slog.Warn(fmt.Sprintf("download: filename %q resolved outside output dir, using GUID", result.filename))
+					slog.Warn("download: filename resolved outside output dir, using GUID", "filename", result.filename)
 				} else if renameErr := os.Rename(downloadedPath, candidate); renameErr != nil {
-					slog.Warn(fmt.Sprintf("download: rename to %q failed (keeping GUID name): %s", safeName, renameErr))
+					slog.Warn("download: rename failed, keeping GUID name", "name", safeName, "err", renameErr)
 				} else {
 					finalPath = candidate
 				}

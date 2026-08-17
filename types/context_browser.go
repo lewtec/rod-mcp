@@ -22,7 +22,7 @@ var launchBrowserFunc = launchBrowser
 func launchBrowser(ctx context.Context, cfg Config) (browser *rod.Browser, clonedDir string, err error) {
 
 	if cfg.CDPEndpoint != "" {
-		slog.Info(fmt.Sprintf("browser launch: connecting to configured CDP endpoint"))
+		slog.Info("browser launch: connecting to configured CDP endpoint")
 		b, err := controlBrowser(ctx, cfg.CDPEndpoint)
 		return b, "", err
 	}
@@ -52,13 +52,13 @@ func launchBrowser(ctx context.Context, cfg Config) (browser *rod.Browser, clone
 		return nil, "", err
 	}
 
-	slog.Info(fmt.Sprintf("browser launch: starting local Chrome headless=%t", cfg.Headless))
+	slog.Info("browser launch: starting local Chrome", "headless", cfg.Headless)
 	launchStart := time.Now()
 	controlUrl, err := browserLauncher.Launch()
 	if err != nil {
 		return nil, "", fmt.Errorf("launch local browser: %w", err)
 	}
-	slog.Info(fmt.Sprintf("browser launch: local Chrome returned CDP URL after %s", time.Since(launchStart).Round(time.Millisecond)))
+	slog.Info("browser launch: local Chrome returned CDP URL", "elapsed", time.Since(launchStart).Round(time.Millisecond))
 	b, err := controlBrowser(ctx, controlUrl)
 	if err != nil {
 		return nil, "", err
@@ -70,12 +70,12 @@ func launchBrowser(ctx context.Context, cfg Config) (browser *rod.Browser, clone
 	if cfg.UserDataDir != "" && !cfg.NoClone {
 		cookies, err := ReadChromeCookies(cfg.UserDataDir, cfg.CloneDomains)
 		if err != nil {
-			slog.Warn(fmt.Sprintf("cookie injection: %s (browser will start without cookies)", err))
+			slog.Warn("cookie injection failed; starting without cookies", "err", err)
 		} else if len(cookies) > 0 {
 			if err := b.SetCookies(cookies); err != nil {
-				slog.Warn(fmt.Sprintf("cookie injection via CDP failed: %s", err))
+				slog.Warn("cookie injection via CDP failed", "err", err)
 			} else {
-				slog.Info(fmt.Sprintf("injected %d cookies via CDP", len(cookies)))
+				slog.Info("injected cookies via CDP", "count", len(cookies))
 			}
 		}
 	}
@@ -90,11 +90,11 @@ func resolveUserDataDir(cfg Config) (userDataDir, clonedDir string, err error) {
 	if cfg.UserDataDir != "" {
 		if cfg.NoClone {
 			// Use the profile directly — user accepted the risk.
-			slog.Warn(fmt.Sprintf("--no-clone: using profile directly at %s (Chrome must not be running with this profile)", cfg.UserDataDir))
+			slog.Warn("using profile directly; Chrome must not already have it open", "dir", cfg.UserDataDir)
 			return cfg.UserDataDir, "", nil
 		} else if cfg.CloneAll {
 			// Full recursive clone — slow but complete.
-			slog.Warn(fmt.Sprintf("--clone-all: cloning ENTIRE Chrome profile — this includes passwords, history, extensions, and all browser data"))
+			slog.Warn("cloning entire Chrome profile including passwords, history, and extensions")
 			clonedDir, err = cloneProfileFull(cfg.UserDataDir)
 			if err != nil {
 				return "", "", fmt.Errorf("full profile clone: %w", err)
@@ -164,7 +164,7 @@ func configureLauncher(ctx context.Context, cfg Config, userDataDir string) (*la
 		l.Delete("enable-automation")
 		// Disable the Blink feature that exposes navigator.webdriver = true.
 		l.Set("disable-blink-features", "AutomationControlled")
-		slog.Info(fmt.Sprintf("[EXPERIMENTAL] stealth mode enabled — behavior may change between releases"))
+		slog.Info("stealth mode enabled; experimental")
 	}
 
 	return l, nil

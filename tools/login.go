@@ -59,7 +59,7 @@ func loginSmartFill(element *rod.Element, value string) error {
 		Value   string `json:"value"`
 	}
 	if parseErr := json.Unmarshal([]byte(obj.Value.Str()), &result); parseErr != nil {
-		slog.Warn(fmt.Sprintf("loginSmartFill: failed to parse smart fill result: %s", parseErr))
+		slog.Warn("loginSmartFill: failed to parse smart fill result", "err", parseErr)
 		return nil // fill was attempted, can't verify
 	}
 	if !result.Success {
@@ -267,7 +267,7 @@ func loginBuildResult(page *rod.Page, verified bool, timeout float64) (string, e
 	currentURL := ""
 	title := ""
 	if infoErr != nil {
-		slog.Debug(fmt.Sprintf("login page info: %s", infoErr))
+		slog.Debug("login page info", "err", infoErr)
 	} else if info != nil {
 		currentURL = info.URL
 		title = info.Title
@@ -276,7 +276,7 @@ func loginBuildResult(page *rod.Page, verified bool, timeout float64) (string, e
 	resp, cookieErr := proto.NetworkGetCookies{}.Call(page)
 	cookieCount := 0
 	if cookieErr != nil {
-		slog.Debug(fmt.Sprintf("login get cookies: %s", cookieErr))
+		slog.Debug("login get cookies", "err", cookieErr)
 	} else if resp != nil {
 		cookieCount = len(resp.Cookies)
 	}

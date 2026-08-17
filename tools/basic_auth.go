@@ -46,7 +46,7 @@ var (
 			wait := browser.HandleAuth(username, password)
 			go func() {
 				if authErr := wait(); authErr != nil {
-					slog.Error(fmt.Sprintf("basic auth handler failed: %s", authErr))
+					slog.Error("basic auth handler failed", "err", authErr)
 				}
 			}()
 

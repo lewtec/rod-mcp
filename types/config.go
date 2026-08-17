@@ -37,14 +37,14 @@ func xdgConfigHome() string {
 		if filepath.IsAbs(xdg) {
 			return xdg
 		}
-		slog.Warn(fmt.Sprintf("XDG_CONFIG_HOME=%q is not an absolute path; ignoring and using ~/.config instead", xdg))
+		slog.Warn("XDG_CONFIG_HOME is not absolute; using ~/.config", "value", xdg)
 	}
 
 	home, err := os.UserHomeDir()
 	if err != nil {
 		// os.UserHomeDir should never fail in normal operation; use os.TempDir
 		// so we always return an absolute path and never pollute the cwd.
-		slog.Warn(fmt.Sprintf("could not determine home directory (%v); using os.TempDir for config", err))
+		slog.Warn("could not determine home directory; using os.TempDir", "err", err)
 		return filepath.Join(os.TempDir(), ".config")
 	}
 	return filepath.Join(home, ".config")
@@ -147,7 +147,7 @@ func InitDefaultConfig() error {
 	defaultConfigPath := DefaultConfigPath()
 	exist, err := utils.PathExists(defaultConfigPath)
 	if err != nil {
-		slog.Warn(fmt.Sprintf("checking config path %s: %v", defaultConfigPath, err))
+		slog.Warn("checking config path", "path", defaultConfigPath, "err", err)
 	}
 	if exist {
 		return nil
@@ -188,7 +188,7 @@ func LoadConfig(configPath string) (*Config, error) {
 			return nil, err
 		}
 		if configPath == "" {
-			slog.Info(fmt.Sprintf("no config file, using built-in defaults"))
+			slog.Info("no config file, using built-in defaults")
 			cfg := DefaultConfig
 			return &cfg, nil
 		}
@@ -218,12 +218,12 @@ func loadConfigFile(configPath string) (*Config, error) {
 	}
 
 	if !exist {
-		slog.Info(fmt.Sprintf("config file not found at %s, using built-in defaults", configPath))
+		slog.Info("config file not found, using built-in defaults", "path", configPath)
 		config := DefaultConfig
 		return &config, nil
 	}
 
-	slog.Info(fmt.Sprintf("loading config from %s", configPath))
+	slog.Info("loading config", "path", configPath)
 
 	file, err := os.Open(configPath)
 	if err != nil {

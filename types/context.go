@@ -174,9 +174,9 @@ func (ctx *Context) initLocked() (bool, error) {
 			if !isClosedBrowserSessionError(err) {
 				return false, fmt.Errorf("check browser session: %w", err)
 			}
-			slog.Warn(fmt.Sprintf("browser session ended or crashed; relaunching on next action: %s", err))
+			slog.Warn("browser session ended or crashed; relaunching on next action", "err", err)
 			if closeErr := ctx.closeBrowser(); closeErr != nil {
-				slog.Warn(fmt.Sprintf("drop stale browser session after close error: %s", closeErr))
+				slog.Warn("drop stale browser session after close error", "err", closeErr)
 				ctx.dropBrowserStateLocked()
 			}
 			recovered = true
@@ -191,12 +191,12 @@ func (ctx *Context) initLocked() (bool, error) {
 		ctx.page, err = createPageFunc(ctx)
 		if err != nil {
 			pageErr := fmt.Errorf("create initial page: %w", err)
-			slog.Warn(fmt.Sprintf("browser launch failed after connect: reason=%s error=%s", launchReason, pageErr))
+			slog.Warn("browser launch failed after connect", "reason", launchReason, "err", pageErr)
 			if ctx.isManagedLocalLaunchLocked() {
 				ctx.recordLaunchFailureLocked(launchReason, pageErr)
 			}
 			if closeErr := ctx.closeBrowser(); closeErr != nil {
-				slog.Warn(fmt.Sprintf("close browser after initial page failure: %s", closeErr))
+				slog.Warn("close browser after initial page failure", "err", closeErr)
 				ctx.dropBrowserStateLocked()
 			}
 			return recovered, fmt.Errorf("create initial page: %w", err)
@@ -225,13 +225,12 @@ func (ctx *Context) launchBrowserLocked(reason string) error {
 		}
 	}
 
-	slog.Info(fmt.Sprintf(
-		"browser launch starting: reason=%s mode=%s headless=%t cdp=%t",
-		reason,
-		ctx.config.Mode,
-		ctx.config.Headless,
-		ctx.config.CDPEndpoint != "",
-	))
+	slog.Info("browser launch starting",
+		"reason", reason,
+		"mode", ctx.config.Mode,
+		"headless", ctx.config.Headless,
+		"cdp", ctx.config.CDPEndpoint != "",
+	)
 	if err := ctx.acquireInstanceLockLocked(); err != nil {
 		return err
 	}
@@ -242,7 +241,7 @@ func (ctx *Context) launchBrowserLocked(reason string) error {
 	// cancel-on-return timeout would break every later op (rod-mcp#308).
 	browser, clonedDir, err := launchBrowserFunc(ctx.stdContext, ctx.config)
 	if err != nil {
-		slog.Warn(fmt.Sprintf("browser launch failed: reason=%s error=%s", reason, err))
+		slog.Warn("browser launch failed", "reason", reason, "err", err)
 		ctx.releaseInstanceLockLocked()
 		if ctx.isManagedLocalLaunchLocked() {
 			ctx.recordLaunchFailureLocked(reason, err)
@@ -271,7 +270,7 @@ func (ctx *Context) releaseInstanceLockLocked() {
 		return
 	}
 	if err := ctx.instanceLock.Release(); err != nil {
-		slog.Warn(fmt.Sprintf("release browser instance lock: %s", err))
+		slog.Warn("release browser instance lock", "err", err)
 	}
 	ctx.instanceLock = nil
 }
@@ -284,13 +283,12 @@ func (ctx *Context) checkLaunchBackoffLocked(reason string) error {
 	if remaining < 0 {
 		remaining = 0
 	}
-	slog.Warn(fmt.Sprintf(
-		"browser launch suppressed during backoff: reason=%s failures=%d retryAfter=%s remaining=%s",
-		reason,
-		ctx.launchFailures,
-		ctx.nextLaunchAt.Format(time.RFC3339),
-		remaining,
-	))
+	slog.Warn("browser launch suppressed during backoff",
+		"reason", reason,
+		"failures", ctx.launchFailures,
+		"retryAfter", ctx.nextLaunchAt.Format(time.RFC3339),
+		"remaining", remaining,
+	)
 	if ctx.lastLaunchErr == nil {
 		return fmt.Errorf("browser launch suppressed after %d failed attempt(s); retry after %s", ctx.launchFailures, ctx.nextLaunchAt.Format(time.RFC3339))
 	}
@@ -309,30 +307,28 @@ func (ctx *Context) recordLaunchFailureLocked(reason string, err error) {
 	}
 	ctx.nextLaunchAt = browserLaunchNow().Add(delay)
 	ctx.lastLaunchErr = err
-	slog.Warn(fmt.Sprintf(
-		"browser launch backoff set: reason=%s failures=%d delay=%s retryAfter=%s error=%s",
-		reason,
-		ctx.launchFailures,
-		delay,
-		ctx.nextLaunchAt.Format(time.RFC3339),
-		err,
-	))
+	slog.Warn("browser launch backoff set",
+		"reason", reason,
+		"failures", ctx.launchFailures,
+		"delay", delay,
+		"retryAfter", ctx.nextLaunchAt.Format(time.RFC3339),
+		"err", err,
+	)
 }
 
 func (ctx *Context) recordLaunchSuccessLocked(reason string) {
 	if ctx.launchFailures > 0 {
-		slog.Info(fmt.Sprintf("browser launch recovered: reason=%s previousFailures=%d", reason, ctx.launchFailures))
+		slog.Info("browser launch recovered", "reason", reason, "previousFailures", ctx.launchFailures)
 	}
 	ctx.launchFailures = 0
 	ctx.nextLaunchAt = time.Time{}
 	ctx.lastLaunchErr = nil
-	slog.Info(fmt.Sprintf(
-		"browser launch succeeded: reason=%s mode=%s headless=%t cdp=%t",
-		reason,
-		ctx.config.Mode,
-		ctx.config.Headless,
-		ctx.config.CDPEndpoint != "",
-	))
+	slog.Info("browser launch succeeded",
+		"reason", reason,
+		"mode", ctx.config.Mode,
+		"headless", ctx.config.Headless,
+		"cdp", ctx.config.CDPEndpoint != "",
+	)
 }
 
 func (ctx *Context) checkBrowserAliveLocked() error {
@@ -397,7 +393,7 @@ func (ctx *Context) RecoverBrowserAfterError(err error) bool {
 	if ctx.browser == nil && ctx.page == nil {
 		return false
 	}
-	slog.Warn(fmt.Sprintf("browser session appears wedged; dropping state so the next action relaunches: %s", err))
+	slog.Warn("browser session appears wedged; dropping state so the next action relaunches", "err", err)
 	ctx.dropBrowserStateLocked()
 	return true
 }
@@ -434,7 +430,7 @@ func (ctx *Context) Execute(handlerFunc server.ToolHandlerFunc, handlerCallOpts 
 	return func(stdCtx context.Context, request mcp.CallToolRequest) (result *mcp.CallToolResult, err error) {
 		defer func() {
 			if recovered := recover(); recovered != nil {
-				slog.Error(fmt.Sprintf("Tool handler panic: %v", recovered))
+				slog.Error("tool handler panic", "panic", recovered)
 				result = mcp.NewToolResultError(fmt.Sprintf("tool handler panic: %v", recovered))
 				err = nil
 			}
@@ -456,7 +452,7 @@ func (ctx *Context) Execute(handlerFunc server.ToolHandlerFunc, handlerCallOpts 
 			snap, snapErr := ctx.EnsureSnapshot()
 			var snapshotText string
 			if snapErr != nil {
-				slog.Warn(fmt.Sprintf("Failed to build snapshot: %s", snapErr))
+				slog.Warn("failed to build snapshot", "err", snapErr)
 				snapshotText = fmt.Sprintf("(snapshot unavailable: %s)", snapErr)
 			} else {
 				snapshotText = snap.String()
@@ -629,7 +625,7 @@ func (ctx *Context) startKeepalive() {
 				_, err := proto.BrowserGetVersion{}.Call(browser.Context(pingCtx))
 				pingCancel()
 				if err != nil {
-					slog.Debug(fmt.Sprintf("CDP keepalive ping failed: %s", err))
+					slog.Debug("CDP keepalive ping failed", "err", err)
 				}
 			}
 		}
@@ -657,7 +653,7 @@ func (ctx *Context) createPage(urls ...string) (*rod.Page, error) {
 		if _, err := setupPage.EvalOnNewDocument(js.StealthJS); err != nil {
 			return nil, fmt.Errorf("inject stealth script: %w", err)
 		}
-		slog.Debug(fmt.Sprintf("stealth mode: injected anti-detection script on new page"))
+		slog.Debug("stealth mode: injected anti-detection script on new page")
 	}
 
 	// When stealth is enabled, auto-set a realistic User-Agent and Sec-CH-UA
@@ -721,7 +717,7 @@ func (ctx *Context) chromeVersion() string {
 	}
 	res, err := proto.BrowserGetVersion{}.Call(ctx.browser)
 	if err != nil {
-		slog.Debug(fmt.Sprintf("stealth: failed to get browser version: %s", err))
+		slog.Debug("stealth: failed to get browser version", "err", err)
 		return ""
 	}
 	// Product is typically "Chrome/124.0.6367.91" or "HeadlessChrome/124..."
@@ -824,15 +820,15 @@ func (ctx *Context) Close() error {
 	ctx.browserLock.Lock()
 	defer ctx.browserLock.Unlock()
 	if err := ctx.closeBrowser(); err != nil {
-		slog.Warn(fmt.Sprintf("close browser: %s", err))
+		slog.Warn("close browser", "err", err)
 	}
 
 	// remove cloned profile dir if we created one
 	if ctx.clonedProfileDir != "" {
 		if err := os.RemoveAll(ctx.clonedProfileDir); err != nil {
-			slog.Warn(fmt.Sprintf("remove cloned profile dir: %s", err))
+			slog.Warn("remove cloned profile dir", "err", err)
 		} else {
-			slog.Info(fmt.Sprintf("cleaned up cloned profile: %s", ctx.clonedProfileDir))
+			slog.Info("cleaned up cloned profile", "dir", ctx.clonedProfileDir)
 		}
 	}
 
@@ -849,7 +845,7 @@ func (ctx *Context) Close() error {
 			}
 		}
 		if lastErr != nil {
-			slog.Warn(fmt.Sprintf("remove browser temp dir: %s", lastErr))
+			slog.Warn("remove browser temp dir", "err", lastErr)
 		}
 	}
 	return nil

@@ -88,7 +88,7 @@ var (
 
 			// Update headers for the target URL (applies domain-specific headers from config)
 			if err := rodCtx.UpdateHeadersForURL(url); err != nil {
-				slog.Warn(fmt.Sprintf("Failed to update headers for %s: %s", url, err))
+				slog.Warn("failed to update headers", "url", url, "err", err)
 			}
 
 			// Apply a timeout so navigation cannot hang indefinitely (e.g. if a
@@ -117,7 +117,7 @@ var (
 			if wantSnapshot && rodCtx.CurrentMode() == types.Text {
 				snapshot, snapErr := rodCtx.BuildSnapshot()
 				if snapErr != nil {
-					slog.Warn(fmt.Sprintf("navigate snapshot: %s", snapErr))
+					slog.Warn("navigate snapshot", "err", snapErr)
 				} else {
 					result += "\n\n" + snapshot
 				}
@@ -129,7 +129,7 @@ var (
 					Format: proto.PageCaptureScreenshotFormatPng,
 				})
 				if shotErr != nil {
-					slog.Warn(fmt.Sprintf("navigate screenshot: %s", shotErr))
+					slog.Warn("navigate screenshot", "err", shotErr)
 				} else {
 					encoded := base64.StdEncoding.EncodeToString(bin)
 					return mcp.NewToolResultImage(result, encoded, "image/png"), nil

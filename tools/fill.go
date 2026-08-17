@@ -57,9 +57,9 @@ func smartFillElement(element *rod.Element, value string) (*smartFillResult, err
 	obj, err := element.Eval(js.SmartFillJS, value)
 	if err != nil {
 		// Fallback to basic rod Input if JS eval fails.
-		slog.Warn(fmt.Sprintf("Smart fill JS failed, falling back to basic Input: %s", err))
+		slog.Warn("smart fill JS failed, falling back to basic Input", "err", err)
 		if selErr := element.SelectAllText(); selErr != nil {
-			slog.Debug(fmt.Sprintf("SelectAllText failed (may be empty): %s", selErr))
+			slog.Debug("SelectAllText failed (may be empty)", "err", selErr)
 		}
 		if inputErr := element.Input(value); inputErr != nil {
 			return nil, fmt.Errorf("smart fill failed and basic input also failed: %w", inputErr)
@@ -69,7 +69,7 @@ func smartFillElement(element *rod.Element, value string) (*smartFillResult, err
 		// ignores direct input.
 		prop, propErr := element.Property("value")
 		if propErr != nil {
-			slog.Warn(fmt.Sprintf("Failed to read element value after basic Input fallback: %s", propErr))
+			slog.Warn("failed to read element value after basic Input fallback", "err", propErr)
 			return &smartFillResult{Method: "basic_fallback", Value: value, Success: false}, nil
 		}
 		finalValue := prop.Str()
@@ -79,7 +79,7 @@ func smartFillElement(element *rod.Element, value string) (*smartFillResult, err
 	var result smartFillResult
 	if err := json.Unmarshal([]byte(obj.Value.Str()), &result); err != nil {
 		// If we can't parse the result, assume the fill was attempted.
-		slog.Warn(fmt.Sprintf("Failed to parse smart fill result: %s", err))
+		slog.Warn("failed to parse smart fill result", "err", err)
 		return &smartFillResult{Method: "unknown", Value: value, Success: false}, nil
 	}
 	return &result, nil
