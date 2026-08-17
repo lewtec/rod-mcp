@@ -82,6 +82,48 @@ func TestGUIServerRegistryLaunchesHeadful(t *testing.T) {
 	}
 }
 
+func TestDataDirDerivesLogProfileOutputAndBrowser(t *testing.T) {
+	subCfg, err := parseCommandArgs([]string{"rod-mcp", "--data-dir", "/tmp/rod-data"})
+	if err != nil {
+		t.Fatalf("parseCommandArgs: %v", err)
+	}
+	if subCfg.DataDir != "/tmp/rod-data" {
+		t.Fatalf("DataDir = %q, want /tmp/rod-data", subCfg.DataDir)
+	}
+	if subCfg.LogFile != "/tmp/rod-data/server.log" {
+		t.Fatalf("LogFile = %q, want /tmp/rod-data/server.log", subCfg.LogFile)
+	}
+	if subCfg.OutputDir != "/tmp/rod-data/output" {
+		t.Fatalf("OutputDir = %q", subCfg.OutputDir)
+	}
+	if subCfg.BrowserTempDir != "/tmp/rod-data/browser" {
+		t.Fatalf("BrowserTempDir = %q", subCfg.BrowserTempDir)
+	}
+	if subCfg.UserDataDir != "/tmp/rod-data/profile" {
+		t.Fatalf("UserDataDir = %q", subCfg.UserDataDir)
+	}
+	if !subCfg.NoClone {
+		t.Fatal("derived profile should default to --no-clone")
+	}
+}
+
+func TestExplicitPathsWinOverDataDir(t *testing.T) {
+	subCfg, err := parseCommandArgs([]string{
+		"rod-mcp",
+		"--data-dir", "/tmp/rod-data",
+		"--log-file", "/tmp/custom.log",
+	})
+	if err != nil {
+		t.Fatalf("parseCommandArgs: %v", err)
+	}
+	if subCfg.LogFile != "/tmp/custom.log" {
+		t.Fatalf("LogFile = %q, want /tmp/custom.log", subCfg.LogFile)
+	}
+	if subCfg.OutputDir != "/tmp/rod-data/output" {
+		t.Fatalf("OutputDir = %q", subCfg.OutputDir)
+	}
+}
+
 func TestParseCommandArgsBrowserLogAndTempDir(t *testing.T) {
 	subCfg, err := parseCommandArgs([]string{
 		"rod-mcp",
