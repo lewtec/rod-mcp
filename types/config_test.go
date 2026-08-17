@@ -301,10 +301,10 @@ func TestLoadConfigDoesNotPolluteCwd(t *testing.T) {
 		t.Errorf("LoadConfig wrote %d file(s) into cwd %q: %v", len(entries), fakeCwd, names)
 	}
 
-	// The config file should have been written under XDG_CONFIG_HOME instead.
+	// Flags-only mode must not create a default yaml under XDG either.
 	wantPath := filepath.Join(xdgDir, "rod-mcp", ConfigName)
-	if _, err := os.Stat(wantPath); err != nil {
-		t.Errorf("expected default config at %q, got: %v", wantPath, err)
+	if _, err := os.Stat(wantPath); !os.IsNotExist(err) {
+		t.Errorf("did not want default config at %q, stat: %v", wantPath, err)
 	}
 }
 

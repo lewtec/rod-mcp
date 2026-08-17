@@ -82,6 +82,46 @@ func TestGUIServerRegistryLaunchesHeadful(t *testing.T) {
 	}
 }
 
+func TestParseCommandArgsBrowserLogAndTempDir(t *testing.T) {
+	subCfg, err := parseCommandArgs([]string{
+		"rod-mcp",
+		"--browser-bin-path", "helium",
+		"--browser-temp-dir", "/tmp/rod-browser",
+		"--log-file", "/tmp/rod.log",
+		"--no-sandbox",
+	})
+	if err != nil {
+		t.Fatalf("parseCommandArgs: %v", err)
+	}
+	if subCfg.BrowserBinPath != "helium" {
+		t.Fatalf("BrowserBinPath = %q, want helium", subCfg.BrowserBinPath)
+	}
+	if subCfg.BrowserTempDir != "/tmp/rod-browser" {
+		t.Fatalf("BrowserTempDir = %q, want /tmp/rod-browser", subCfg.BrowserTempDir)
+	}
+	if subCfg.LogFile != "/tmp/rod.log" {
+		t.Fatalf("LogFile = %q, want /tmp/rod.log", subCfg.LogFile)
+	}
+	if !subCfg.NoSandbox {
+		t.Fatal("NoSandbox = false, want true")
+	}
+
+	cfg := types.DefaultConfig
+	applyOverrides(&cfg, subCfg)
+	if cfg.BrowserBinPath != "helium" {
+		t.Fatalf("cfg.BrowserBinPath = %q, want helium", cfg.BrowserBinPath)
+	}
+	if cfg.LoggerConfig.LoggerFileName != "/tmp/rod.log" {
+		t.Fatalf("cfg.LoggerFileName = %q, want /tmp/rod.log", cfg.LoggerConfig.LoggerFileName)
+	}
+	if cfg.BrowserTempDir != "/tmp/rod-browser" {
+		t.Fatalf("cfg.BrowserTempDir = %q", cfg.BrowserTempDir)
+	}
+	if !cfg.NoSandbox {
+		t.Fatal("cfg.NoSandbox = false, want true")
+	}
+}
+
 func containsArg(args []string, want string) bool {
 	for _, arg := range args {
 		if arg == want {

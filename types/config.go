@@ -178,24 +178,27 @@ func InitDefaultConfig() error {
 
 // LoadConfig loads the configuration file at configPath.
 // When configPath is empty it first checks DefaultConfigPath() (XDG_CONFIG_HOME/rod-mcp/rod-mcp.yaml),
-// then ./rod-mcp.yaml for legacy compatibility. If neither exists, it creates
-// DefaultConfigPath() with built-in defaults.
-// The resolved config path is logged at startup so users always know where rod-mcp reads config from.
+// then ./rod-mcp.yaml for legacy compatibility. If neither exists, built-in
+// defaults are used and no file is created.
 func LoadConfig(configPath string) (*Config, error) {
 	if configPath == "" {
 		var err error
-		configPath, err = resolveDefaultConfigPath()
+		configPath, err = findExistingConfigPath()
 		if err != nil {
 			return nil, err
+		}
+		if configPath == "" {
+			log.Infof("no config file, using built-in defaults")
+			cfg := DefaultConfig
+			return &cfg, nil
 		}
 	}
 
 	return loadConfigFile(configPath)
 }
 
-func resolveDefaultConfigPath() (string, error) {
-	defaultConfigPath := DefaultConfigPath()
-	for _, candidate := range []string{defaultConfigPath, ConfigName} {
+func findExistingConfigPath() (string, error) {
+	for _, candidate := range []string{DefaultConfigPath(), ConfigName} {
 		exist, err := utils.PathExists(candidate)
 		if err != nil {
 			return "", fmt.Errorf("check config file %s: %w", candidate, err)
@@ -204,11 +207,7 @@ func resolveDefaultConfigPath() (string, error) {
 			return candidate, nil
 		}
 	}
-
-	if err := InitDefaultConfig(); err != nil {
-		return "", fmt.Errorf("init default config %s: %w", defaultConfigPath, err)
-	}
-	return defaultConfigPath, nil
+	return "", nil
 }
 
 func loadConfigFile(configPath string) (*Config, error) {
