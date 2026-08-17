@@ -1,0 +1,5 @@
+# Semantic Version Utility — used by `mise release`.
+# See https://github.com/caarlos0/svu
+tag.prefix: ""
+always: true
+v0: true
