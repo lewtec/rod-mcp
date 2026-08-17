@@ -47,7 +47,7 @@ func newRootCmd() *cobra.Command {
 
 	fs := cmd.Flags()
 	fs.StringP("config", "c", "", "optional config file")
-	fs.String("data-dir", "", "base directory for log, profile, browser temp, and output (default: $XDG_CACHE_HOME/rod-mcp)")
+	fs.String("data-dir", "", "base directory for log, profile, browser temp, and output (default: user cache/rod-mcp)")
 	fs.String("cdp-endpoint", "", "control a running browser by CDP")
 	fs.String("chrome-debug-port", "", "launch Chrome with --remote-debugging-port (e.g. 9222)")
 	fs.String("user-data-dir", "", "Chrome profile directory (default: <data-dir>/profile)")
@@ -135,14 +135,11 @@ func setDerivedDefault(cmd *cobra.Command, name, value string) {
 }
 
 func defaultDataDir() string {
-	if cache := os.Getenv("XDG_CACHE_HOME"); cache != "" {
-		return filepath.Join(cache, "rod-mcp")
-	}
-	home, err := os.UserHomeDir()
+	cache, err := os.UserCacheDir()
 	if err != nil {
 		return filepath.Join(os.TempDir(), "rod-mcp")
 	}
-	return filepath.Join(home, ".cache", "rod-mcp")
+	return filepath.Join(cache, "rod-mcp")
 }
 
 func subCfgFromCmd(cmd *cobra.Command) (*SubCfg, error) {
