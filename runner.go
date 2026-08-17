@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
-	"github.com/charmbracelet/log"
 	"github.com/aliwatters/rod-mcp/types"
+	"github.com/charmbracelet/log"
 )
 
 type Runner struct {

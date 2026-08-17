@@ -1,8 +1,8 @@
 package types
 
 import (
-	"github.com/charmbracelet/log"
 	"github.com/aliwatters/rod-mcp/utils"
+	"github.com/charmbracelet/log"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
