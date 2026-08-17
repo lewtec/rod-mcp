@@ -8,31 +8,11 @@ import (
 
 	"github.com/aliwatters/rod-mcp/types"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
 
-type SubCfg struct {
-	Headless        bool
-	HeadlessSet     bool
-	ConfigPath      string
-	Mode            types.Mode
-	CDPEndpoint     string
-	ChromeDebugPort string
-	UserDataDir     string
-	CloneDomains    string
-	NoClone         bool
-	CloneAll        bool
-	CompactSnapshot bool
-	OutputDir       string
-	OmitImages      bool
-	BrowserBinPath  string
-	BrowserTempDir  string
-	LogFile         string
-	NoSandbox       bool
-	DataDir         string
-}
-
-func RunCmd() (*SubCfg, error) {
+func RunCmd() (*types.Config, error) {
 	return parseCommandArgs(os.Args)
 }
 
@@ -75,11 +55,28 @@ func newRootCmd() *cobra.Command {
 	_ = fs.MarkHidden("vs")
 	_ = fs.MarkHidden("cdp")
 
-	mustBind(viper.BindPFlags(fs))
+	bindFlags(fs)
 	return cmd
 }
 
-func parseCommandArgs(args []string) (*SubCfg, error) {
+func bindFlags(fs *pflag.FlagSet) {
+	mustBind(viper.BindPFlag("dataDir", fs.Lookup("data-dir")))
+	mustBind(viper.BindPFlag("cdpEndpoint", fs.Lookup("cdp-endpoint")))
+	mustBind(viper.BindPFlag("chromeDebugPort", fs.Lookup("chrome-debug-port")))
+	mustBind(viper.BindPFlag("userDataDir", fs.Lookup("user-data-dir")))
+	mustBind(viper.BindPFlag("cloneDomains", fs.Lookup("clone-domains")))
+	mustBind(viper.BindPFlag("noClone", fs.Lookup("no-clone")))
+	mustBind(viper.BindPFlag("cloneAll", fs.Lookup("clone-all")))
+	mustBind(viper.BindPFlag("headless", fs.Lookup("headless")))
+	mustBind(viper.BindPFlag("compactSnapshot", fs.Lookup("compact-snapshot")))
+	mustBind(viper.BindPFlag("outputDir", fs.Lookup("output-dir")))
+	mustBind(viper.BindPFlag("browserBinPath", fs.Lookup("browser-bin-path")))
+	mustBind(viper.BindPFlag("browserTempDir", fs.Lookup("browser-temp-dir")))
+	mustBind(viper.BindPFlag("loggerConfig.loggerFileName", fs.Lookup("log-file")))
+	mustBind(viper.BindPFlag("noSandbox", fs.Lookup("no-sandbox")))
+}
+
+func parseCommandArgs(args []string) (*types.Config, error) {
 	viper.Reset()
 	cmd := newRootCmd()
 	cmd.SetArgs(args[1:])
@@ -89,11 +86,20 @@ func parseCommandArgs(args []string) (*SubCfg, error) {
 	if err := initViper(cmd); err != nil {
 		return nil, err
 	}
-	sub, err := subCfgFromCmd(cmd)
-	if err != nil {
+	if err := resolveAliases(cmd); err != nil {
 		return nil, err
 	}
-	return sub, nil
+	derivePaths(cmd)
+
+	cfg := types.DefaultConfig
+	if err := viper.Unmarshal(&cfg); err != nil {
+		return nil, fmt.Errorf("unmarshal config: %w", err)
+	}
+	if !headlessFlagSet(cmd) {
+		cfg.Headless = types.DefaultConfig.Headless
+	}
+	cfg.ServerVersion = Version
+	return &cfg, nil
 }
 
 func initViper(cmd *cobra.Command) error {
@@ -101,37 +107,73 @@ func initViper(cmd *cobra.Command) error {
 	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
 	viper.AutomaticEnv()
 
-	cfgPath := viper.GetString("config")
-	if cfgPath != "" {
-		viper.SetConfigFile(cfgPath)
+	if path, _ := cmd.Flags().GetString("config"); path != "" {
+		viper.SetConfigFile(path)
 		if err := viper.ReadInConfig(); err != nil {
-			return fmt.Errorf("read config %s: %w", cfgPath, err)
+			return fmt.Errorf("read config %s: %w", path, err)
 		}
-	}
-
-	dataDir := viper.GetString("data-dir")
-	if dataDir == "" {
-		dataDir = defaultDataDir()
-		viper.Set("data-dir", dataDir)
-	}
-	setDerivedDefault(cmd, "log-file", filepath.Join(dataDir, "server.log"))
-	setDerivedDefault(cmd, "output-dir", filepath.Join(dataDir, "output"))
-	setDerivedDefault(cmd, "browser-temp-dir", filepath.Join(dataDir, "browser"))
-	setDerivedDefault(cmd, "user-data-dir", filepath.Join(dataDir, "profile"))
-	if !cmd.Flags().Changed("user-data-dir") && !cmd.Flags().Changed("no-clone") && !viper.GetBool("clone-all") {
-		viper.Set("no-clone", true)
 	}
 	return nil
 }
 
-func setDerivedDefault(cmd *cobra.Command, name, value string) {
-	if cmd.Flags().Changed(name) {
+func resolveAliases(cmd *cobra.Command) error {
+	headless, _ := cmd.Flags().GetBool("headless")
+	hl, _ := cmd.Flags().GetBool("hl")
+	gui, _ := cmd.Flags().GetBool("gui")
+	if (cmd.Flags().Changed("headless") || cmd.Flags().Changed("hl")) && gui && (headless || hl) {
+		return fmt.Errorf("--gui cannot be combined with --headless")
+	}
+	if gui {
+		viper.Set("headless", false)
+	} else if cmd.Flags().Changed("hl") && !cmd.Flags().Changed("headless") {
+		viper.Set("headless", hl)
+	}
+
+	if flagBool(cmd, "vision") || flagBool(cmd, "vs") {
+		viper.Set("mode", string(types.Vision))
+	}
+	if flagBool(cmd, "cs") && !cmd.Flags().Changed("compact-snapshot") {
+		viper.Set("compactSnapshot", true)
+	}
+	if cdp := flagString(cmd, "cdp"); cdp != "" && !cmd.Flags().Changed("cdp-endpoint") {
+		viper.Set("cdpEndpoint", cdp)
+	}
+	if flagBool(cmd, "omit-images") {
+		viper.Set("imageResponses", string(types.ImageResponsesOmit))
+	}
+	if raw := viper.Get("cloneDomains"); raw != nil {
+		if s, ok := raw.(string); ok {
+			viper.Set("cloneDomains", parseCloneDomains(s))
+		}
+	}
+	return nil
+}
+
+func derivePaths(cmd *cobra.Command) {
+	dataDir := viper.GetString("dataDir")
+	if dataDir == "" {
+		dataDir = defaultDataDir()
+		viper.Set("dataDir", dataDir)
+	}
+	setDerivedDefault(cmd, "user-data-dir", "userDataDir", filepath.Join(dataDir, "profile"))
+	setDerivedDefault(cmd, "browser-temp-dir", "browserTempDir", filepath.Join(dataDir, "browser"))
+	setDerivedDefault(cmd, "output-dir", "outputDir", filepath.Join(dataDir, "output"))
+	if !cmd.Flags().Changed("log-file") && viper.GetString("loggerConfig.loggerFileName") == "" {
+		viper.Set("loggerConfig.loggerFileName", filepath.Join(dataDir, "server.log"))
+	}
+	if !cmd.Flags().Changed("user-data-dir") && !cmd.Flags().Changed("no-clone") && !viper.GetBool("cloneAll") {
+		viper.Set("noClone", true)
+	}
+}
+
+func setDerivedDefault(cmd *cobra.Command, flagName, viperKey, value string) {
+	if cmd.Flags().Changed(flagName) {
 		return
 	}
-	if viper.GetString(name) != "" {
+	if viper.GetString(viperKey) != "" {
 		return
 	}
-	viper.Set(name, value)
+	viper.Set(viperKey, value)
 }
 
 func defaultDataDir() string {
@@ -142,48 +184,18 @@ func defaultDataDir() string {
 	return filepath.Join(cache, "rod-mcp")
 }
 
-func subCfgFromCmd(cmd *cobra.Command) (*SubCfg, error) {
-	headless := viper.GetBool("headless") || viper.GetBool("hl")
-	gui := viper.GetBool("gui")
-	headlessSet := cmd.Flags().Changed("headless") || cmd.Flags().Changed("hl") || cmd.Flags().Changed("gui")
-	if gui {
-		if (cmd.Flags().Changed("headless") || cmd.Flags().Changed("hl")) && headless {
-			return nil, fmt.Errorf("--gui cannot be combined with --headless")
-		}
-		headless = false
-		headlessSet = true
-	}
+func headlessFlagSet(cmd *cobra.Command) bool {
+	return cmd.Flags().Changed("headless") || cmd.Flags().Changed("hl") || cmd.Flags().Changed("gui")
+}
 
-	mode := types.Mode("")
-	if viper.GetBool("vision") || viper.GetBool("vs") {
-		mode = types.Vision
-	}
+func flagBool(cmd *cobra.Command, name string) bool {
+	v, _ := cmd.Flags().GetBool(name)
+	return v
+}
 
-	cdp := viper.GetString("cdp-endpoint")
-	if cdp == "" {
-		cdp = viper.GetString("cdp")
-	}
-
-	return &SubCfg{
-		Headless:        headless,
-		HeadlessSet:     headlessSet,
-		ConfigPath:      viper.GetString("config"),
-		Mode:            mode,
-		CDPEndpoint:     cdp,
-		ChromeDebugPort: viper.GetString("chrome-debug-port"),
-		UserDataDir:     viper.GetString("user-data-dir"),
-		CloneDomains:    viper.GetString("clone-domains"),
-		NoClone:         viper.GetBool("no-clone"),
-		CloneAll:        viper.GetBool("clone-all"),
-		CompactSnapshot: viper.GetBool("compact-snapshot") || viper.GetBool("cs"),
-		OutputDir:       viper.GetString("output-dir"),
-		OmitImages:      viper.GetBool("omit-images"),
-		BrowserBinPath:  viper.GetString("browser-bin-path"),
-		BrowserTempDir:  viper.GetString("browser-temp-dir"),
-		LogFile:         viper.GetString("log-file"),
-		NoSandbox:       viper.GetBool("no-sandbox"),
-		DataDir:         viper.GetString("data-dir"),
-	}, nil
+func flagString(cmd *cobra.Command, name string) string {
+	v, _ := cmd.Flags().GetString(name)
+	return v
 }
 
 func mustBind(err error) {
