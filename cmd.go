@@ -27,7 +27,7 @@ func newRootCmd() *cobra.Command {
 
 	fs := cmd.Flags()
 	fs.StringP("config", "c", "", "optional config file")
-	fs.String("data-dir", "", "base directory for log, profile, browser temp, and output (default: user cache/rod-mcp)")
+	fs.String("data-dir", "", "base directory for profile, browser temp, and output (default: user cache/rod-mcp)")
 	fs.String("cdp-endpoint", "", "control a running browser by CDP")
 	fs.String("chrome-debug-port", "", "launch Chrome with --remote-debugging-port (e.g. 9222)")
 	fs.String("user-data-dir", "", "Chrome profile directory (default: <data-dir>/profile)")
@@ -41,7 +41,7 @@ func newRootCmd() *cobra.Command {
 	fs.String("output-dir", "", "screenshots and PDFs (default: <data-dir>/output)")
 	fs.String("browser-bin-path", "", "path or PATH name of the Chromium-based browser")
 	fs.String("browser-temp-dir", "", "ephemeral profiles when --user-data-dir is unset (default: <data-dir>/browser)")
-	fs.String("log-file", "", "log file (default: <data-dir>/server.log)")
+	fs.String("log-file", "", "write logs to this file instead of stderr")
 	fs.Bool("no-sandbox", false, "disable the Chrome sandbox")
 	fs.Bool("omit-images", false, "omit inline base64 images from screenshot results")
 	fs.Bool("no-banner", false, "")
@@ -158,9 +158,6 @@ func derivePaths(cmd *cobra.Command) {
 	setDerivedDefault(cmd, "user-data-dir", "userDataDir", filepath.Join(dataDir, "profile"))
 	setDerivedDefault(cmd, "browser-temp-dir", "browserTempDir", filepath.Join(dataDir, "browser"))
 	setDerivedDefault(cmd, "output-dir", "outputDir", filepath.Join(dataDir, "output"))
-	if !cmd.Flags().Changed("log-file") && viper.GetString("loggerConfig.loggerFileName") == "" {
-		viper.Set("loggerConfig.loggerFileName", filepath.Join(dataDir, "server.log"))
-	}
 	if !cmd.Flags().Changed("user-data-dir") && !cmd.Flags().Changed("no-clone") && !viper.GetBool("cloneAll") {
 		viper.Set("noClone", true)
 	}
