@@ -7,6 +7,7 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
+	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -14,7 +15,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/charmbracelet/log"
 	"github.com/go-rod/rod/lib/proto"
 )
 
@@ -304,7 +304,7 @@ func ReadChromeCookiesWithDeps(profileDir string, domains []string, kr KeychainR
 
 	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
 	if len(lines) == 0 || (len(lines) == 1 && lines[0] == "") {
-		log.Warnf("no cookies found matching domains: %v", domains)
+		slog.Warn(fmt.Sprintf("no cookies found matching domains: %v", domains))
 		return nil, nil
 	}
 
@@ -322,8 +322,8 @@ func ReadChromeCookiesWithDeps(profileDir string, domains []string, kr KeychainR
 	}
 
 	if decryptErrors > 0 {
-		log.Warnf("failed to decrypt %d cookies (skipped)", decryptErrors)
+		slog.Warn(fmt.Sprintf("failed to decrypt %d cookies (skipped)", decryptErrors))
 	}
-	log.Infof("read %d cookies from Chrome profile", len(cookies))
+	slog.Info(fmt.Sprintf("read %d cookies from Chrome profile", len(cookies)))
 	return cookies, nil
 }

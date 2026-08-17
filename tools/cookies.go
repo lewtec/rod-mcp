@@ -4,12 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/log"
 	"github.com/go-rod/rod"
 	"github.com/go-rod/rod/lib/proto"
 	"github.com/mark3labs/mcp-go/mcp"
@@ -224,7 +224,7 @@ func cookiesRestore(rodCtx *types.Context, page *rod.Page, args map[string]inter
 	var restored, skipped int
 	for _, c := range cookies {
 		if c.Expires > 0 && c.Expires < now {
-			log.Debugf("cookie %q expired, skipping", c.Name)
+			slog.Debug(fmt.Sprintf("cookie %q expired, skipping", c.Name))
 			skipped++
 			continue
 		}
@@ -241,7 +241,7 @@ func cookiesRestore(rodCtx *types.Context, page *rod.Page, args map[string]inter
 			setCookie.Expires = c.Expires
 		}
 		if _, err := setCookie.Call(page); err != nil {
-			log.Warnf("failed to restore cookie %q: %s", c.Name, err)
+			slog.Warn(fmt.Sprintf("failed to restore cookie %q: %s", c.Name, err))
 			continue
 		}
 		restored++

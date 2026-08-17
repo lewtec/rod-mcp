@@ -3,9 +3,9 @@ package tools
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strings"
 
-	"github.com/charmbracelet/log"
 	"github.com/go-rod/rod"
 	"github.com/go-rod/rod/lib/proto"
 	"github.com/mark3labs/mcp-go/mcp"
@@ -229,19 +229,19 @@ func coverageStop(page *rod.Page, doJS, doCSS bool) (*mcp.CallToolResult, error)
 	var stopped []string
 	if doJS {
 		if err := (proto.ProfilerStopPreciseCoverage{}).Call(page); err != nil {
-			log.Warnf("stop profiler coverage: %s", err)
+			slog.Warn(fmt.Sprintf("stop profiler coverage: %s", err))
 		}
 		if err := (proto.ProfilerDisable{}).Call(page); err != nil {
-			log.Warnf("disable profiler: %s", err)
+			slog.Warn(fmt.Sprintf("disable profiler: %s", err))
 		}
 		stopped = append(stopped, "JS")
 	}
 	if doCSS {
 		if _, err := (proto.CSSStopRuleUsageTracking{}).Call(page); err != nil {
-			log.Warnf("stop CSS rule tracking: %s", err)
+			slog.Warn(fmt.Sprintf("stop CSS rule tracking: %s", err))
 		}
 		if err := (proto.CSSDisable{}).Call(page); err != nil {
-			log.Warnf("disable CSS domain: %s", err)
+			slog.Warn(fmt.Sprintf("disable CSS domain: %s", err))
 		}
 		stopped = append(stopped, "CSS")
 	}

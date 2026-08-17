@@ -1,9 +1,10 @@
 package types
 
 import (
+	"fmt"
+	"log/slog"
 	"strings"
 
-	"github.com/charmbracelet/log"
 	"github.com/go-rod/rod"
 	"github.com/go-rod/rod/lib/proto"
 )
@@ -55,7 +56,7 @@ func (ctx *Context) attachEventListeners(page *rod.Page) (cancel func()) {
 		// rod_handle_dialog tool so callers retain explicit control.
 		if e.Type == proto.PageDialogTypeBeforeunload {
 			if err := (proto.PageHandleJavaScriptDialog{Accept: true}).Call(page); err != nil {
-				log.Warnf("auto-accept beforeunload dialog: %s", err)
+				slog.Warn(fmt.Sprintf("auto-accept beforeunload dialog: %s", err))
 			}
 		}
 	}, func(e *proto.RuntimeConsoleAPICalled) {

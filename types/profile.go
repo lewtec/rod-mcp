@@ -3,10 +3,9 @@ package types
 import (
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"path/filepath"
-
-	"github.com/charmbracelet/log"
 )
 
 // Chrome user-data-dir layout constants.
@@ -62,7 +61,7 @@ func cloneProfile(srcDir string, domains []string) (string, error) {
 		src := filepath.Join(srcDir, name)
 		if _, err := os.Stat(src); err == nil {
 			if err := copyFile(src, filepath.Join(tmpDir, name)); err != nil {
-				log.Warnf("clone profile: skip %s: %s", name, err)
+				slog.Warn(fmt.Sprintf("clone profile: skip %s: %s", name, err))
 			}
 		}
 	}
@@ -76,7 +75,7 @@ func cloneProfile(srcDir string, domains []string) (string, error) {
 		src := filepath.Join(profileDir, name)
 		if _, err := os.Stat(src); err == nil {
 			if err := copyFile(src, filepath.Join(tmpProfile, name)); err != nil {
-				log.Warnf("clone profile: skip %s: %s", name, err)
+				slog.Warn(fmt.Sprintf("clone profile: skip %s: %s", name, err))
 			}
 		}
 	}
@@ -90,7 +89,7 @@ func cloneProfile(srcDir string, domains []string) (string, error) {
 	localStorageSrc := filepath.Join(profileDir, chromeLocalStorage)
 	if _, err := os.Stat(localStorageSrc); err == nil {
 		if err := copyDir(localStorageSrc, filepath.Join(tmpProfile, chromeLocalStorage)); err != nil {
-			log.Warnf("clone profile: skip %s: %s", chromeLocalStorage, err)
+			slog.Warn(fmt.Sprintf("clone profile: skip %s: %s", chromeLocalStorage, err))
 		}
 	}
 
@@ -98,11 +97,11 @@ func cloneProfile(srcDir string, domains []string) (string, error) {
 	sessionStorageSrc := filepath.Join(profileDir, chromeSessionStorage)
 	if _, err := os.Stat(sessionStorageSrc); err == nil {
 		if err := copyDir(sessionStorageSrc, filepath.Join(tmpProfile, chromeSessionStorage)); err != nil {
-			log.Warnf("clone profile: skip %s: %s", chromeSessionStorage, err)
+			slog.Warn(fmt.Sprintf("clone profile: skip %s: %s", chromeSessionStorage, err))
 		}
 	}
 
-	log.Infof("cloned Chrome profile to %s", tmpDir)
+	slog.Info(fmt.Sprintf("cloned Chrome profile to %s", tmpDir))
 	return tmpDir, nil
 }
 
@@ -129,7 +128,7 @@ func cloneProfileFull(srcDir string) (string, error) {
 		return "", fmt.Errorf("full clone failed: %w", err)
 	}
 
-	log.Warnf("full profile clone to %s (this includes ALL browser data — passwords, history, extensions)", tmpDir)
+	slog.Warn(fmt.Sprintf("full profile clone to %s (this includes ALL browser data — passwords, history, extensions)", tmpDir))
 	return tmpDir, nil
 }
 

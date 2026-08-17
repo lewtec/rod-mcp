@@ -2,13 +2,13 @@ package types
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/aliwatters/rod-mcp/utils"
-	"github.com/charmbracelet/log"
 	"gopkg.in/yaml.v3"
 )
 
@@ -37,14 +37,14 @@ func xdgConfigHome() string {
 		if filepath.IsAbs(xdg) {
 			return xdg
 		}
-		log.Warnf("XDG_CONFIG_HOME=%q is not an absolute path; ignoring and using ~/.config instead", xdg)
+		slog.Warn(fmt.Sprintf("XDG_CONFIG_HOME=%q is not an absolute path; ignoring and using ~/.config instead", xdg))
 	}
 
 	home, err := os.UserHomeDir()
 	if err != nil {
 		// os.UserHomeDir should never fail in normal operation; use os.TempDir
 		// so we always return an absolute path and never pollute the cwd.
-		log.Warnf("could not determine home directory (%v); using os.TempDir for config", err)
+		slog.Warn(fmt.Sprintf("could not determine home directory (%v); using os.TempDir for config", err))
 		return filepath.Join(os.TempDir(), ".config")
 	}
 	return filepath.Join(home, ".config")
@@ -78,7 +78,7 @@ type Config struct {
 	BrowserTempDir      string            `yaml:"browserTempDir" json:"browserTempDir" mapstructure:"browserTempDir"`
 	NoSandbox           bool              `yaml:"noSandbox" json:"noSandbox" mapstructure:"noSandbox"`
 	Proxy               string            `yaml:"proxy" json:"proxy" mapstructure:"proxy"`
-	LoggerConfig        LoggerConfig      `yaml:"loggerConfig" json:"loggerConfig" mapstructure:"loggerConfig"`
+	Verbose             bool              `yaml:"verbose" json:"verbose" mapstructure:"verbose"`
 	ExtraHTTPHeaders    map[string]string `yaml:"extraHTTPHeaders" json:"extraHTTPHeaders" mapstructure:"extraHTTPHeaders"`
 	CompactSnapshot     bool              `yaml:"compactSnapshot" json:"compactSnapshot" mapstructure:"compactSnapshot"`
 	// DomainHeaders maps domain patterns to headers that should be injected for matching URLs.
@@ -121,7 +121,6 @@ var (
 		NoSandbox:           false,
 		Proxy:               "",
 		ServerName:          DefaultServerName,
-		LoggerConfig:        DefaultLoggerConfig,
 		Mode:                Text,
 		ImageResponses:      ImageResponsesAllow,
 	}
@@ -148,7 +147,7 @@ func InitDefaultConfig() error {
 	defaultConfigPath := DefaultConfigPath()
 	exist, err := utils.PathExists(defaultConfigPath)
 	if err != nil {
-		log.Warnf("checking config path %s: %v", defaultConfigPath, err)
+		slog.Warn(fmt.Sprintf("checking config path %s: %v", defaultConfigPath, err))
 	}
 	if exist {
 		return nil
@@ -189,7 +188,7 @@ func LoadConfig(configPath string) (*Config, error) {
 			return nil, err
 		}
 		if configPath == "" {
-			log.Infof("no config file, using built-in defaults")
+			slog.Info(fmt.Sprintf("no config file, using built-in defaults"))
 			cfg := DefaultConfig
 			return &cfg, nil
 		}
@@ -219,12 +218,12 @@ func loadConfigFile(configPath string) (*Config, error) {
 	}
 
 	if !exist {
-		log.Infof("config file not found at %s, using built-in defaults", configPath)
+		slog.Info(fmt.Sprintf("config file not found at %s, using built-in defaults", configPath))
 		config := DefaultConfig
 		return &config, nil
 	}
 
-	log.Infof("loading config from %s", configPath)
+	slog.Info(fmt.Sprintf("loading config from %s", configPath))
 
 	file, err := os.Open(configPath)
 	if err != nil {

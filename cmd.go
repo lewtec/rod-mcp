@@ -41,7 +41,7 @@ func newRootCmd() *cobra.Command {
 	fs.String("output-dir", "", "screenshots and PDFs (default: <data-dir>/output)")
 	fs.String("browser-bin-path", "", "path or PATH name of the Chromium-based browser")
 	fs.String("browser-temp-dir", "", "ephemeral profiles when --user-data-dir is unset (default: <data-dir>/browser)")
-	fs.String("log-file", "", "write logs to this file instead of stderr")
+	fs.BoolP("verbose", "v", false, "debug logs on stderr")
 	fs.Bool("no-sandbox", false, "disable the Chrome sandbox")
 	fs.Bool("omit-images", false, "omit inline base64 images from screenshot results")
 	fs.Bool("no-banner", false, "")
@@ -72,7 +72,7 @@ func bindFlags(fs *pflag.FlagSet) {
 	mustBind(viper.BindPFlag("outputDir", fs.Lookup("output-dir")))
 	mustBind(viper.BindPFlag("browserBinPath", fs.Lookup("browser-bin-path")))
 	mustBind(viper.BindPFlag("browserTempDir", fs.Lookup("browser-temp-dir")))
-	mustBind(viper.BindPFlag("loggerConfig.loggerFileName", fs.Lookup("log-file")))
+	mustBind(viper.BindPFlag("verbose", fs.Lookup("verbose")))
 	mustBind(viper.BindPFlag("noSandbox", fs.Lookup("no-sandbox")))
 }
 

@@ -2,11 +2,11 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
-
-	"github.com/charmbracelet/log"
 
 	"github.com/aliwatters/rod-mcp/types"
 )
@@ -14,13 +14,13 @@ import (
 func main() {
 	cfg, err := RunCmd()
 	if err != nil {
-		log.Error(err)
+		slog.Error("run command", "err", err)
 		return
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	types.InitLogger(cfg.LoggerConfig)
+	types.InitLogger(cfg.Verbose)
 
 	runner := NewRunner(ctx, *cfg)
 	go func() {
@@ -28,7 +28,7 @@ func main() {
 		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 		defer signal.Stop(c)
 		<-c
-		log.Info("Received signal, exiting...")
+		slog.Info("Received signal, exiting...")
 		cancel()
 	}()
 	runner.Run()
@@ -36,7 +36,7 @@ func main() {
 	defer func() {
 		err := runner.Close()
 		if err != nil {
-			log.Errorf("Server close error: %s", err)
+			slog.Error(fmt.Sprintf("Server close error: %s", err))
 		}
 	}()
 	return
