@@ -47,6 +47,18 @@ func applyOverrides(cfg *types.Config, subCfg *SubCfg) {
 	if subCfg.OmitImages {
 		cfg.ImageResponses = types.ImageResponsesOmit
 	}
+	if subCfg.BrowserBinPath != "" {
+		cfg.BrowserBinPath = subCfg.BrowserBinPath
+	}
+	if subCfg.BrowserTempDir != "" {
+		cfg.BrowserTempDir = subCfg.BrowserTempDir
+	}
+	if subCfg.LogFile != "" {
+		cfg.LoggerConfig.LoggerFileName = subCfg.LogFile
+	}
+	if subCfg.NoSandbox {
+		cfg.NoSandbox = true
+	}
 }
 
 func main() {
@@ -63,10 +75,8 @@ func main() {
 		log.Errorf("Load config error: %s", err)
 		return
 	}
-	// init logger
-	types.InitLogger(cfg.LoggerConfig)
-
 	applyOverrides(cfg, subCfg)
+	types.InitLogger(cfg.LoggerConfig)
 
 	cfg.ServerVersion = Version
 

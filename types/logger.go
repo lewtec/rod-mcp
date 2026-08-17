@@ -24,7 +24,7 @@ type LoggerConfig struct {
 
 var DefaultLoggerConfig = LoggerConfig{
 	LoggerLevel:          "info",
-	LoggerFileName:       "./log/server.log",
+	LoggerFileName:       "",
 	LoggerFileMaxBackups: 5,
 	LoggerFileMaxSize:    50,
 	LoggerFileMaxAge:     30,
