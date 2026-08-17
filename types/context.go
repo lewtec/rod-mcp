@@ -5,13 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net"
 	"os"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/charmbracelet/log"
 	"github.com/go-rod/rod"
 	"github.com/go-rod/rod/lib/proto"
 	"github.com/mark3labs/mcp-go/mcp"
@@ -174,9 +174,9 @@ func (ctx *Context) initLocked() (bool, error) {
 			if !isClosedBrowserSessionError(err) {
 				return false, fmt.Errorf("check browser session: %w", err)
 			}
-			log.Warnf("browser session ended or crashed; relaunching on next action: %s", err)
+			slog.Warn(fmt.Sprintf("browser session ended or crashed; relaunching on next action: %s", err))
 			if closeErr := ctx.closeBrowser(); closeErr != nil {
-				log.Warnf("drop stale browser session after close error: %s", closeErr)
+				slog.Warn(fmt.Sprintf("drop stale browser session after close error: %s", closeErr))
 				ctx.dropBrowserStateLocked()
 			}
 			recovered = true
@@ -191,12 +191,12 @@ func (ctx *Context) initLocked() (bool, error) {
 		ctx.page, err = createPageFunc(ctx)
 		if err != nil {
 			pageErr := fmt.Errorf("create initial page: %w", err)
-			log.Warnf("browser launch failed after connect: reason=%s error=%s", launchReason, pageErr)
+			slog.Warn(fmt.Sprintf("browser launch failed after connect: reason=%s error=%s", launchReason, pageErr))
 			if ctx.isManagedLocalLaunchLocked() {
 				ctx.recordLaunchFailureLocked(launchReason, pageErr)
 			}
 			if closeErr := ctx.closeBrowser(); closeErr != nil {
-				log.Warnf("close browser after initial page failure: %s", closeErr)
+				slog.Warn(fmt.Sprintf("close browser after initial page failure: %s", closeErr))
 				ctx.dropBrowserStateLocked()
 			}
 			return recovered, fmt.Errorf("create initial page: %w", err)
@@ -225,13 +225,13 @@ func (ctx *Context) launchBrowserLocked(reason string) error {
 		}
 	}
 
-	log.Infof(
+	slog.Info(fmt.Sprintf(
 		"browser launch starting: reason=%s mode=%s headless=%t cdp=%t",
 		reason,
 		ctx.config.Mode,
 		ctx.config.Headless,
 		ctx.config.CDPEndpoint != "",
-	)
+	))
 	if err := ctx.acquireInstanceLockLocked(); err != nil {
 		return err
 	}
@@ -242,7 +242,7 @@ func (ctx *Context) launchBrowserLocked(reason string) error {
 	// cancel-on-return timeout would break every later op (rod-mcp#308).
 	browser, clonedDir, err := launchBrowserFunc(ctx.stdContext, ctx.config)
 	if err != nil {
-		log.Warnf("browser launch failed: reason=%s error=%s", reason, err)
+		slog.Warn(fmt.Sprintf("browser launch failed: reason=%s error=%s", reason, err))
 		ctx.releaseInstanceLockLocked()
 		if ctx.isManagedLocalLaunchLocked() {
 			ctx.recordLaunchFailureLocked(reason, err)
@@ -271,7 +271,7 @@ func (ctx *Context) releaseInstanceLockLocked() {
 		return
 	}
 	if err := ctx.instanceLock.Release(); err != nil {
-		log.Warnf("release browser instance lock: %s", err)
+		slog.Warn(fmt.Sprintf("release browser instance lock: %s", err))
 	}
 	ctx.instanceLock = nil
 }
@@ -284,13 +284,13 @@ func (ctx *Context) checkLaunchBackoffLocked(reason string) error {
 	if remaining < 0 {
 		remaining = 0
 	}
-	log.Warnf(
+	slog.Warn(fmt.Sprintf(
 		"browser launch suppressed during backoff: reason=%s failures=%d retryAfter=%s remaining=%s",
 		reason,
 		ctx.launchFailures,
 		ctx.nextLaunchAt.Format(time.RFC3339),
 		remaining,
-	)
+	))
 	if ctx.lastLaunchErr == nil {
 		return fmt.Errorf("browser launch suppressed after %d failed attempt(s); retry after %s", ctx.launchFailures, ctx.nextLaunchAt.Format(time.RFC3339))
 	}
@@ -309,30 +309,30 @@ func (ctx *Context) recordLaunchFailureLocked(reason string, err error) {
 	}
 	ctx.nextLaunchAt = browserLaunchNow().Add(delay)
 	ctx.lastLaunchErr = err
-	log.Warnf(
+	slog.Warn(fmt.Sprintf(
 		"browser launch backoff set: reason=%s failures=%d delay=%s retryAfter=%s error=%s",
 		reason,
 		ctx.launchFailures,
 		delay,
 		ctx.nextLaunchAt.Format(time.RFC3339),
 		err,
-	)
+	))
 }
 
 func (ctx *Context) recordLaunchSuccessLocked(reason string) {
 	if ctx.launchFailures > 0 {
-		log.Infof("browser launch recovered: reason=%s previousFailures=%d", reason, ctx.launchFailures)
+		slog.Info(fmt.Sprintf("browser launch recovered: reason=%s previousFailures=%d", reason, ctx.launchFailures))
 	}
 	ctx.launchFailures = 0
 	ctx.nextLaunchAt = time.Time{}
 	ctx.lastLaunchErr = nil
-	log.Infof(
+	slog.Info(fmt.Sprintf(
 		"browser launch succeeded: reason=%s mode=%s headless=%t cdp=%t",
 		reason,
 		ctx.config.Mode,
 		ctx.config.Headless,
 		ctx.config.CDPEndpoint != "",
-	)
+	))
 }
 
 func (ctx *Context) checkBrowserAliveLocked() error {
@@ -397,7 +397,7 @@ func (ctx *Context) RecoverBrowserAfterError(err error) bool {
 	if ctx.browser == nil && ctx.page == nil {
 		return false
 	}
-	log.Warnf("browser session appears wedged; dropping state so the next action relaunches: %s", err)
+	slog.Warn(fmt.Sprintf("browser session appears wedged; dropping state so the next action relaunches: %s", err))
 	ctx.dropBrowserStateLocked()
 	return true
 }
@@ -434,7 +434,7 @@ func (ctx *Context) Execute(handlerFunc server.ToolHandlerFunc, handlerCallOpts 
 	return func(stdCtx context.Context, request mcp.CallToolRequest) (result *mcp.CallToolResult, err error) {
 		defer func() {
 			if recovered := recover(); recovered != nil {
-				log.Errorf("Tool handler panic: %v", recovered)
+				slog.Error(fmt.Sprintf("Tool handler panic: %v", recovered))
 				result = mcp.NewToolResultError(fmt.Sprintf("tool handler panic: %v", recovered))
 				err = nil
 			}
@@ -456,7 +456,7 @@ func (ctx *Context) Execute(handlerFunc server.ToolHandlerFunc, handlerCallOpts 
 			snap, snapErr := ctx.EnsureSnapshot()
 			var snapshotText string
 			if snapErr != nil {
-				log.Warnf("Failed to build snapshot: %s", snapErr)
+				slog.Warn(fmt.Sprintf("Failed to build snapshot: %s", snapErr))
 				snapshotText = fmt.Sprintf("(snapshot unavailable: %s)", snapErr)
 			} else {
 				snapshotText = snap.String()
@@ -629,7 +629,7 @@ func (ctx *Context) startKeepalive() {
 				_, err := proto.BrowserGetVersion{}.Call(browser.Context(pingCtx))
 				pingCancel()
 				if err != nil {
-					log.Debugf("CDP keepalive ping failed: %s", err)
+					slog.Debug(fmt.Sprintf("CDP keepalive ping failed: %s", err))
 				}
 			}
 		}
@@ -657,7 +657,7 @@ func (ctx *Context) createPage(urls ...string) (*rod.Page, error) {
 		if _, err := setupPage.EvalOnNewDocument(js.StealthJS); err != nil {
 			return nil, fmt.Errorf("inject stealth script: %w", err)
 		}
-		log.Debugf("stealth mode: injected anti-detection script on new page")
+		slog.Debug(fmt.Sprintf("stealth mode: injected anti-detection script on new page"))
 	}
 
 	// When stealth is enabled, auto-set a realistic User-Agent and Sec-CH-UA
@@ -721,7 +721,7 @@ func (ctx *Context) chromeVersion() string {
 	}
 	res, err := proto.BrowserGetVersion{}.Call(ctx.browser)
 	if err != nil {
-		log.Debugf("stealth: failed to get browser version: %s", err)
+		slog.Debug(fmt.Sprintf("stealth: failed to get browser version: %s", err))
 		return ""
 	}
 	// Product is typically "Chrome/124.0.6367.91" or "HeadlessChrome/124..."
@@ -824,15 +824,15 @@ func (ctx *Context) Close() error {
 	ctx.browserLock.Lock()
 	defer ctx.browserLock.Unlock()
 	if err := ctx.closeBrowser(); err != nil {
-		log.Warnf("close browser: %s", err)
+		slog.Warn(fmt.Sprintf("close browser: %s", err))
 	}
 
 	// remove cloned profile dir if we created one
 	if ctx.clonedProfileDir != "" {
 		if err := os.RemoveAll(ctx.clonedProfileDir); err != nil {
-			log.Warnf("remove cloned profile dir: %s", err)
+			slog.Warn(fmt.Sprintf("remove cloned profile dir: %s", err))
 		} else {
-			log.Infof("cleaned up cloned profile: %s", ctx.clonedProfileDir)
+			slog.Info(fmt.Sprintf("cleaned up cloned profile: %s", ctx.clonedProfileDir))
 		}
 	}
 
@@ -849,7 +849,7 @@ func (ctx *Context) Close() error {
 			}
 		}
 		if lastErr != nil {
-			log.Warnf("remove browser temp dir: %s", lastErr)
+			slog.Warn(fmt.Sprintf("remove browser temp dir: %s", lastErr))
 		}
 	}
 	return nil

@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"log/slog"
+
 	"github.com/aliwatters/rod-mcp/types"
-	"github.com/charmbracelet/log"
 )
 
 type Runner struct {
@@ -19,7 +21,7 @@ func NewRunner(ctx context.Context, cfg types.Config) *Runner {
 func (r *Runner) Run() {
 	err := r.server.Start()
 	if err != nil {
-		log.Errorf("Server start error: %s", err)
+		slog.Error(fmt.Sprintf("Server start error: %s", err))
 	}
 }
 

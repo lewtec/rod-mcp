@@ -3,10 +3,10 @@ package tools
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/log"
 	"github.com/go-rod/rod"
 	"github.com/go-rod/rod/lib/input"
 	"github.com/mark3labs/mcp-go/mcp"
@@ -72,7 +72,7 @@ func waitDOMStable(page *rod.Page, timeout ...time.Duration) {
 		waitTimeout = timeout[0]
 	}
 	if err := page.Timeout(waitTimeout).WaitDOMStable(defaultWaitStableDur, defaultDomDiff); err != nil {
-		log.Debugf("WaitDOMStable: %s", err)
+		slog.Debug(fmt.Sprintf("WaitDOMStable: %s", err))
 	}
 }
 

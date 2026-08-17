@@ -2,8 +2,8 @@ package tools
 
 import (
 	"fmt"
+	"log/slog"
 
-	"github.com/charmbracelet/log"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 
@@ -45,7 +45,7 @@ func (rs Registrations) Handlers() map[string]ToolHandler {
 
 // toolError logs the error and returns a formatted error for the MCP response.
 func toolError(action string, err error) error {
-	log.Errorf("Failed to %s: %s", action, err)
+	slog.Error(fmt.Sprintf("Failed to %s: %s", action, err))
 	return fmt.Errorf("Failed to %s: %s", action, err)
 }
 

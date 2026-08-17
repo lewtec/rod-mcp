@@ -5,8 +5,8 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"log/slog"
 
-	"github.com/charmbracelet/log"
 	"github.com/go-rod/rod"
 	"github.com/go-rod/rod/lib/proto"
 	"github.com/mark3labs/mcp-go/mcp"
@@ -88,7 +88,7 @@ var (
 
 			// Update headers for the target URL (applies domain-specific headers from config)
 			if err := rodCtx.UpdateHeadersForURL(url); err != nil {
-				log.Warnf("Failed to update headers for %s: %s", url, err)
+				slog.Warn(fmt.Sprintf("Failed to update headers for %s: %s", url, err))
 			}
 
 			// Apply a timeout so navigation cannot hang indefinitely (e.g. if a
@@ -117,7 +117,7 @@ var (
 			if wantSnapshot && rodCtx.CurrentMode() == types.Text {
 				snapshot, snapErr := rodCtx.BuildSnapshot()
 				if snapErr != nil {
-					log.Warnf("navigate snapshot: %s", snapErr)
+					slog.Warn(fmt.Sprintf("navigate snapshot: %s", snapErr))
 				} else {
 					result += "\n\n" + snapshot
 				}
@@ -129,7 +129,7 @@ var (
 					Format: proto.PageCaptureScreenshotFormatPng,
 				})
 				if shotErr != nil {
-					log.Warnf("navigate screenshot: %s", shotErr)
+					slog.Warn(fmt.Sprintf("navigate screenshot: %s", shotErr))
 				} else {
 					encoded := base64.StdEncoding.EncodeToString(bin)
 					return mcp.NewToolResultImage(result, encoded, "image/png"), nil

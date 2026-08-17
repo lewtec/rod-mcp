@@ -3,9 +3,9 @@ package tools
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strings"
 
-	"github.com/charmbracelet/log"
 	"github.com/go-rod/rod"
 	"github.com/go-rod/rod/lib/proto"
 	"github.com/mark3labs/mcp-go/mcp"
@@ -95,7 +95,7 @@ func interceptEnable(rodCtx *types.Context, page *rod.Page) (*mcp.CallToolResult
 						ResponseHeaders: rule.Headers,
 						Body:            rule.Body,
 					}).Call(cancelPage); err != nil {
-						log.Warnf("fulfill request %s: %s", e.RequestID, err)
+						slog.Warn(fmt.Sprintf("fulfill request %s: %s", e.RequestID, err))
 					}
 					return
 				case "block", "fail":
@@ -107,7 +107,7 @@ func interceptEnable(rodCtx *types.Context, page *rod.Page) (*mcp.CallToolResult
 						RequestID:   e.RequestID,
 						ErrorReason: reason,
 					}).Call(cancelPage); err != nil {
-						log.Warnf("fail request %s: %s", e.RequestID, err)
+						slog.Warn(fmt.Sprintf("fail request %s: %s", e.RequestID, err))
 					}
 					return
 				}
@@ -116,7 +116,7 @@ func interceptEnable(rodCtx *types.Context, page *rod.Page) (*mcp.CallToolResult
 		if err := (proto.FetchContinueRequest{
 			RequestID: e.RequestID,
 		}).Call(cancelPage); err != nil {
-			log.Warnf("continue request %s: %s", e.RequestID, err)
+			slog.Warn(fmt.Sprintf("continue request %s: %s", e.RequestID, err))
 		}
 	})()
 

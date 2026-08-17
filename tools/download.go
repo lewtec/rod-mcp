@@ -4,12 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/log"
 	"github.com/go-rod/rod/lib/proto"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
@@ -122,9 +122,9 @@ var (
 				safeName := filepath.Base(result.filename)
 				candidate := filepath.Clean(filepath.Join(outDir, safeName))
 				if !strings.HasPrefix(candidate, filepath.Clean(outDir)+string(os.PathSeparator)) {
-					log.Warnf("download: filename %q resolved outside output dir, using GUID", result.filename)
+					slog.Warn(fmt.Sprintf("download: filename %q resolved outside output dir, using GUID", result.filename))
 				} else if renameErr := os.Rename(downloadedPath, candidate); renameErr != nil {
-					log.Warnf("download: rename to %q failed (keeping GUID name): %s", safeName, renameErr)
+					slog.Warn(fmt.Sprintf("download: rename to %q failed (keeping GUID name): %s", safeName, renameErr))
 				} else {
 					finalPath = candidate
 				}

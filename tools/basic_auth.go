@@ -3,8 +3,8 @@ package tools
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
-	"github.com/charmbracelet/log"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 
@@ -46,7 +46,7 @@ var (
 			wait := browser.HandleAuth(username, password)
 			go func() {
 				if authErr := wait(); authErr != nil {
-					log.Errorf("basic auth handler failed: %s", authErr)
+					slog.Error(fmt.Sprintf("basic auth handler failed: %s", authErr))
 				}
 			}()
 

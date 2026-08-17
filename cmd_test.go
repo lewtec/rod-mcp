@@ -68,9 +68,6 @@ func TestDataDirDerivesLogProfileOutputAndBrowser(t *testing.T) {
 	if cfg.DataDir != "/tmp/rod-data" {
 		t.Fatalf("DataDir = %q, want /tmp/rod-data", cfg.DataDir)
 	}
-	if cfg.LoggerConfig.LoggerFileName != "" {
-		t.Fatalf("LoggerFileName = %q, want empty (stderr)", cfg.LoggerConfig.LoggerFileName)
-	}
 	if cfg.OutputDir != "/tmp/rod-data/output" {
 		t.Fatalf("OutputDir = %q", cfg.OutputDir)
 	}
@@ -89,25 +86,31 @@ func TestExplicitPathsWinOverDataDir(t *testing.T) {
 	cfg, err := parseCommandArgs([]string{
 		"rod-mcp",
 		"--data-dir", "/tmp/rod-data",
-		"--log-file", "/tmp/custom.log",
+		"--output-dir", "/tmp/custom-out",
 	})
 	if err != nil {
 		t.Fatalf("parseCommandArgs: %v", err)
 	}
-	if cfg.LoggerConfig.LoggerFileName != "/tmp/custom.log" {
-		t.Fatalf("LoggerFileName = %q, want /tmp/custom.log", cfg.LoggerConfig.LoggerFileName)
-	}
-	if cfg.OutputDir != "/tmp/rod-data/output" {
-		t.Fatalf("OutputDir = %q", cfg.OutputDir)
+	if cfg.OutputDir != "/tmp/custom-out" {
+		t.Fatalf("OutputDir = %q, want /tmp/custom-out", cfg.OutputDir)
 	}
 }
 
-func TestParseCommandArgsBrowserLogAndTempDir(t *testing.T) {
+func TestVerboseFlag(t *testing.T) {
+	cfg, err := parseCommandArgs([]string{"rod-mcp", "--verbose"})
+	if err != nil {
+		t.Fatalf("parseCommandArgs: %v", err)
+	}
+	if !cfg.Verbose {
+		t.Fatal("Verbose = false, want true")
+	}
+}
+
+func TestParseCommandArgsBrowserAndTempDir(t *testing.T) {
 	cfg, err := parseCommandArgs([]string{
 		"rod-mcp",
 		"--browser-bin-path", "helium",
 		"--browser-temp-dir", "/tmp/rod-browser",
-		"--log-file", "/tmp/rod.log",
 		"--no-sandbox",
 	})
 	if err != nil {
@@ -118,9 +121,6 @@ func TestParseCommandArgsBrowserLogAndTempDir(t *testing.T) {
 	}
 	if cfg.BrowserTempDir != "/tmp/rod-browser" {
 		t.Fatalf("BrowserTempDir = %q, want /tmp/rod-browser", cfg.BrowserTempDir)
-	}
-	if cfg.LoggerConfig.LoggerFileName != "/tmp/rod.log" {
-		t.Fatalf("LoggerFileName = %q, want /tmp/rod.log", cfg.LoggerConfig.LoggerFileName)
 	}
 	if !cfg.NoSandbox {
 		t.Fatal("NoSandbox = false, want true")
