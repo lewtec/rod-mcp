@@ -61,7 +61,7 @@ func cloneProfile(srcDir string, domains []string) (string, error) {
 		src := filepath.Join(srcDir, name)
 		if _, err := os.Stat(src); err == nil {
 			if err := copyFile(src, filepath.Join(tmpDir, name)); err != nil {
-				slog.Warn(fmt.Sprintf("clone profile: skip %s: %s", name, err))
+				slog.Warn("clone profile: skip file", "name", name, "err", err)
 			}
 		}
 	}
@@ -75,7 +75,7 @@ func cloneProfile(srcDir string, domains []string) (string, error) {
 		src := filepath.Join(profileDir, name)
 		if _, err := os.Stat(src); err == nil {
 			if err := copyFile(src, filepath.Join(tmpProfile, name)); err != nil {
-				slog.Warn(fmt.Sprintf("clone profile: skip %s: %s", name, err))
+				slog.Warn("clone profile: skip file", "name", name, "err", err)
 			}
 		}
 	}
@@ -89,7 +89,7 @@ func cloneProfile(srcDir string, domains []string) (string, error) {
 	localStorageSrc := filepath.Join(profileDir, chromeLocalStorage)
 	if _, err := os.Stat(localStorageSrc); err == nil {
 		if err := copyDir(localStorageSrc, filepath.Join(tmpProfile, chromeLocalStorage)); err != nil {
-			slog.Warn(fmt.Sprintf("clone profile: skip %s: %s", chromeLocalStorage, err))
+			slog.Warn("clone profile: skip dir", "name", chromeLocalStorage, "err", err)
 		}
 	}
 
@@ -97,11 +97,11 @@ func cloneProfile(srcDir string, domains []string) (string, error) {
 	sessionStorageSrc := filepath.Join(profileDir, chromeSessionStorage)
 	if _, err := os.Stat(sessionStorageSrc); err == nil {
 		if err := copyDir(sessionStorageSrc, filepath.Join(tmpProfile, chromeSessionStorage)); err != nil {
-			slog.Warn(fmt.Sprintf("clone profile: skip %s: %s", chromeSessionStorage, err))
+			slog.Warn("clone profile: skip dir", "name", chromeSessionStorage, "err", err)
 		}
 	}
 
-	slog.Info(fmt.Sprintf("cloned Chrome profile to %s", tmpDir))
+	slog.Info("cloned Chrome profile", "dir", tmpDir)
 	return tmpDir, nil
 }
 
@@ -128,7 +128,7 @@ func cloneProfileFull(srcDir string) (string, error) {
 		return "", fmt.Errorf("full clone failed: %w", err)
 	}
 
-	slog.Warn(fmt.Sprintf("full profile clone to %s (this includes ALL browser data — passwords, history, extensions)", tmpDir))
+	slog.Warn("full profile clone includes all browser data", "dir", tmpDir)
 	return tmpDir, nil
 }
 

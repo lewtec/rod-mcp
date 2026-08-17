@@ -45,7 +45,7 @@ func (rs Registrations) Handlers() map[string]ToolHandler {
 
 // toolError logs the error and returns a formatted error for the MCP response.
 func toolError(action string, err error) error {
-	slog.Error(fmt.Sprintf("Failed to %s: %s", action, err))
+	slog.Error("tool failed", "action", action, "err", err)
 	return fmt.Errorf("Failed to %s: %s", action, err)
 }
 

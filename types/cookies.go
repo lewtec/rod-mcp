@@ -304,7 +304,7 @@ func ReadChromeCookiesWithDeps(profileDir string, domains []string, kr KeychainR
 
 	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
 	if len(lines) == 0 || (len(lines) == 1 && lines[0] == "") {
-		slog.Warn(fmt.Sprintf("no cookies found matching domains: %v", domains))
+		slog.Warn("no cookies found matching domains", "domains", domains)
 		return nil, nil
 	}
 
@@ -322,8 +322,8 @@ func ReadChromeCookiesWithDeps(profileDir string, domains []string, kr KeychainR
 	}
 
 	if decryptErrors > 0 {
-		slog.Warn(fmt.Sprintf("failed to decrypt %d cookies (skipped)", decryptErrors))
+		slog.Warn("failed to decrypt cookies; skipped", "count", decryptErrors)
 	}
-	slog.Info(fmt.Sprintf("read %d cookies from Chrome profile", len(cookies)))
+	slog.Info("read cookies from Chrome profile", "count", len(cookies))
 	return cookies, nil
 }

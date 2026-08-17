@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 
 	"github.com/aliwatters/rod-mcp/types"
@@ -21,7 +20,7 @@ func NewRunner(ctx context.Context, cfg types.Config) *Runner {
 func (r *Runner) Run() {
 	err := r.server.Start()
 	if err != nil {
-		slog.Error(fmt.Sprintf("Server start error: %s", err))
+		slog.Error("server start", "err", err)
 	}
 }
 

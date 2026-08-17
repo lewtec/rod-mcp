@@ -225,18 +225,18 @@ func (s *Snapshot) walkIframeNode(node *yaml.Node, frame *rod.Page) *yaml.Node {
 
 	childFrameEle, err := utils.QueryEleByAria(frame, ref)
 	if err != nil {
-		slog.Debug(fmt.Sprintf("walkIframeNode: query element for ref %q: %s", ref, err))
+		slog.Debug("walkIframeNode: query element", "ref", ref, "err", err)
 		return pairNode
 	}
 	childFrame, err := childFrameEle.Frame()
 	if err != nil {
-		slog.Debug(fmt.Sprintf("walkIframeNode: get frame for ref %q: %s", ref, err))
+		slog.Debug("walkIframeNode: get frame", "ref", ref, "err", err)
 		return pairNode
 	}
 	childSnapshot, err := s.captureSnapshotWithFrames(childFrame)
 	if err != nil || len(childSnapshot.Content) == 0 {
 		if err != nil {
-			slog.Debug(fmt.Sprintf("walkIframeNode: capture snapshot for ref %q: %s", ref, err))
+			slog.Debug("walkIframeNode: capture snapshot", "ref", ref, "err", err)
 		}
 		return pairNode
 	}

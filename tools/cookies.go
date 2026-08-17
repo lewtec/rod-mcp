@@ -224,7 +224,7 @@ func cookiesRestore(rodCtx *types.Context, page *rod.Page, args map[string]inter
 	var restored, skipped int
 	for _, c := range cookies {
 		if c.Expires > 0 && c.Expires < now {
-			slog.Debug(fmt.Sprintf("cookie %q expired, skipping", c.Name))
+			slog.Debug("cookie expired, skipping", "name", c.Name)
 			skipped++
 			continue
 		}
@@ -241,7 +241,7 @@ func cookiesRestore(rodCtx *types.Context, page *rod.Page, args map[string]inter
 			setCookie.Expires = c.Expires
 		}
 		if _, err := setCookie.Call(page); err != nil {
-			slog.Warn(fmt.Sprintf("failed to restore cookie %q: %s", c.Name, err))
+			slog.Warn("failed to restore cookie", "name", c.Name, "err", err)
 			continue
 		}
 		restored++

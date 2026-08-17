@@ -229,19 +229,19 @@ func coverageStop(page *rod.Page, doJS, doCSS bool) (*mcp.CallToolResult, error)
 	var stopped []string
 	if doJS {
 		if err := (proto.ProfilerStopPreciseCoverage{}).Call(page); err != nil {
-			slog.Warn(fmt.Sprintf("stop profiler coverage: %s", err))
+			slog.Warn("stop profiler coverage", "err", err)
 		}
 		if err := (proto.ProfilerDisable{}).Call(page); err != nil {
-			slog.Warn(fmt.Sprintf("disable profiler: %s", err))
+			slog.Warn("disable profiler", "err", err)
 		}
 		stopped = append(stopped, "JS")
 	}
 	if doCSS {
 		if _, err := (proto.CSSStopRuleUsageTracking{}).Call(page); err != nil {
-			slog.Warn(fmt.Sprintf("stop CSS rule tracking: %s", err))
+			slog.Warn("stop CSS rule tracking", "err", err)
 		}
 		if err := (proto.CSSDisable{}).Call(page); err != nil {
-			slog.Warn(fmt.Sprintf("disable CSS domain: %s", err))
+			slog.Warn("disable CSS domain", "err", err)
 		}
 		stopped = append(stopped, "CSS")
 	}

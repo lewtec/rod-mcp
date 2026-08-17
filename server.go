@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 
 	"github.com/mark3labs/mcp-go/server"
@@ -37,7 +36,7 @@ func NewServer(stdCtx context.Context, cfg types.Config) *Server {
 // so there is no risk of a tool being registered without a handler.
 func (s *Server) registerTools(regs tools.Registrations) *Server {
 	for _, reg := range regs {
-		slog.Debug(fmt.Sprintf("register tool: %s", reg.Tool.Name))
+		slog.Debug("register tool", "name", reg.Tool.Name)
 		s.mcpServer.AddTool(reg.Tool, reg.Handler(s.ctx))
 	}
 	return s
