@@ -61,36 +61,37 @@ const (
 )
 
 type Config struct {
-	Mode                Mode              `yaml:"mode" json:"mode"`
-	CDPEndpoint         string            `yaml:"cdpEndpoint" json:"cdpEndpoint"`
-	ChromeDebugPort     string            `yaml:"chromeDebugPort" json:"chromeDebugPort"`
-	LaunchTimeoutMs     int               `yaml:"launchTimeoutMs" json:"launchTimeoutMs"`
-	NavigationTimeoutMs int               `yaml:"navigationTimeoutMs" json:"navigationTimeoutMs"`
-	UserDataDir         string            `yaml:"userDataDir" json:"userDataDir"`
-	CloneDomains        []string          `yaml:"cloneDomains" json:"cloneDomains"`
-	NoClone             bool              `yaml:"noClone" json:"noClone"`
-	CloneAll            bool              `yaml:"cloneAll" json:"cloneAll"`
-	ServerName          string            `yaml:"serverName" json:"serverName"`
-	ServerVersion       string            `yaml:"-" json:"-"`
-	BrowserBinPath      string            `yaml:"browserBinPath" json:"browserBinPath"`
-	Headless            bool              `yaml:"headless" json:"headless"`
-	BrowserTempDir      string            `yaml:"browserTempDir" json:"browserTempDir"`
-	NoSandbox           bool              `yaml:"noSandbox" json:"noSandbox"`
-	Proxy               string            `yaml:"proxy" json:"proxy"`
-	LoggerConfig        LoggerConfig      `yaml:"loggerConfig" json:"loggerConfig"`
-	ExtraHTTPHeaders    map[string]string `yaml:"extraHTTPHeaders" json:"extraHTTPHeaders"`
-	CompactSnapshot     bool              `yaml:"compactSnapshot" json:"compactSnapshot"`
+	DataDir             string            `yaml:"dataDir" json:"dataDir" mapstructure:"dataDir"`
+	Mode                Mode              `yaml:"mode" json:"mode" mapstructure:"mode"`
+	CDPEndpoint         string            `yaml:"cdpEndpoint" json:"cdpEndpoint" mapstructure:"cdpEndpoint"`
+	ChromeDebugPort     string            `yaml:"chromeDebugPort" json:"chromeDebugPort" mapstructure:"chromeDebugPort"`
+	LaunchTimeoutMs     int               `yaml:"launchTimeoutMs" json:"launchTimeoutMs" mapstructure:"launchTimeoutMs"`
+	NavigationTimeoutMs int               `yaml:"navigationTimeoutMs" json:"navigationTimeoutMs" mapstructure:"navigationTimeoutMs"`
+	UserDataDir         string            `yaml:"userDataDir" json:"userDataDir" mapstructure:"userDataDir"`
+	CloneDomains        []string          `yaml:"cloneDomains" json:"cloneDomains" mapstructure:"cloneDomains"`
+	NoClone             bool              `yaml:"noClone" json:"noClone" mapstructure:"noClone"`
+	CloneAll            bool              `yaml:"cloneAll" json:"cloneAll" mapstructure:"cloneAll"`
+	ServerName          string            `yaml:"serverName" json:"serverName" mapstructure:"serverName"`
+	ServerVersion       string            `yaml:"-" json:"-" mapstructure:"-"`
+	BrowserBinPath      string            `yaml:"browserBinPath" json:"browserBinPath" mapstructure:"browserBinPath"`
+	Headless            bool              `yaml:"headless" json:"headless" mapstructure:"headless"`
+	BrowserTempDir      string            `yaml:"browserTempDir" json:"browserTempDir" mapstructure:"browserTempDir"`
+	NoSandbox           bool              `yaml:"noSandbox" json:"noSandbox" mapstructure:"noSandbox"`
+	Proxy               string            `yaml:"proxy" json:"proxy" mapstructure:"proxy"`
+	LoggerConfig        LoggerConfig      `yaml:"loggerConfig" json:"loggerConfig" mapstructure:"loggerConfig"`
+	ExtraHTTPHeaders    map[string]string `yaml:"extraHTTPHeaders" json:"extraHTTPHeaders" mapstructure:"extraHTTPHeaders"`
+	CompactSnapshot     bool              `yaml:"compactSnapshot" json:"compactSnapshot" mapstructure:"compactSnapshot"`
 	// DomainHeaders maps domain patterns to headers that should be injected for matching URLs.
 	// Patterns support wildcards: "*.example.com" matches "www.example.com", "api.example.com", etc.
 	// Headers from matching patterns are merged with ExtraHTTPHeaders.
 	DomainHeaders map[string]map[string]string `yaml:"domainHeaders" json:"domainHeaders"`
 	// OutputDir is the directory where screenshots and PDFs are saved.
 	// Defaults to a "rod-mcp" subdirectory in the OS temp directory.
-	OutputDir string `yaml:"outputDir" json:"outputDir"`
+	OutputDir string `yaml:"outputDir" json:"outputDir" mapstructure:"outputDir"`
 	// ImageResponses controls whether inline base64 image data is included in screenshot results.
 	// "allow" (default): saves file and includes inline base64 ImageContent.
 	// "omit": saves file only, returns just the file path (saves tokens).
-	ImageResponses ImageResponsesMode `yaml:"imageResponses" json:"imageResponses"`
+	ImageResponses ImageResponsesMode `yaml:"imageResponses" json:"imageResponses" mapstructure:"imageResponses"`
 	// LoginUsernameSelectors overrides the default username field selectors tried during login.
 	// If empty, the built-in defaults are used (input[type=email], input[name=email], etc.).
 	LoginUsernameSelectors []string `yaml:"loginUsernameSelectors" json:"loginUsernameSelectors"`

@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"os"
 	"testing"
-
-	"github.com/aliwatters/rod-mcp/types"
 )
 
 type registryEntry struct {
@@ -13,34 +11,16 @@ type registryEntry struct {
 	Args    []string `json:"args"`
 }
 
-func TestApplyOverridesCanForceHeadful(t *testing.T) {
-	cfg := types.DefaultConfig
-	applyOverrides(&cfg, &SubCfg{
-		Headless:    false,
-		HeadlessSet: true,
-	})
-
-	if cfg.Headless {
-		t.Fatal("Headless = true, want false")
-	}
-}
-
 func TestParseCommandArgsGUIForcesHeadful(t *testing.T) {
-	subCfg, err := parseCommandArgs([]string{"rod-mcp", "--gui", "--compact-snapshot"})
+	cfg, err := parseCommandArgs([]string{"rod-mcp", "--gui", "--compact-snapshot"})
 	if err != nil {
 		t.Fatalf("parseCommandArgs: %v", err)
 	}
-	if !subCfg.HeadlessSet {
-		t.Fatal("HeadlessSet = false, want true")
-	}
-	if subCfg.Headless {
+	if cfg.Headless {
 		t.Fatal("Headless = true, want false")
 	}
-
-	cfg := types.DefaultConfig
-	applyOverrides(&cfg, subCfg)
-	if cfg.Headless {
-		t.Fatal("registry-style --gui launch stayed headless")
+	if !cfg.CompactSnapshot {
+		t.Fatal("CompactSnapshot = false, want true")
 	}
 }
 
@@ -71,44 +51,42 @@ func TestGUIServerRegistryLaunchesHeadful(t *testing.T) {
 		t.Fatalf("rod-mcp-gui args = %v, must not include --headless", entry.Args)
 	}
 
-	subCfg, err := parseCommandArgs(append([]string{"rod-mcp"}, entry.Args...))
+	cfg, err := parseCommandArgs(append([]string{"rod-mcp"}, entry.Args...))
 	if err != nil {
 		t.Fatalf("parse registry args: %v", err)
 	}
-	cfg := types.DefaultConfig
-	applyOverrides(&cfg, subCfg)
 	if cfg.Headless {
 		t.Fatalf("rod-mcp-gui registry args yielded Headless=true: %v", entry.Args)
 	}
 }
 
 func TestDataDirDerivesLogProfileOutputAndBrowser(t *testing.T) {
-	subCfg, err := parseCommandArgs([]string{"rod-mcp", "--data-dir", "/tmp/rod-data"})
+	cfg, err := parseCommandArgs([]string{"rod-mcp", "--data-dir", "/tmp/rod-data"})
 	if err != nil {
 		t.Fatalf("parseCommandArgs: %v", err)
 	}
-	if subCfg.DataDir != "/tmp/rod-data" {
-		t.Fatalf("DataDir = %q, want /tmp/rod-data", subCfg.DataDir)
+	if cfg.DataDir != "/tmp/rod-data" {
+		t.Fatalf("DataDir = %q, want /tmp/rod-data", cfg.DataDir)
 	}
-	if subCfg.LogFile != "/tmp/rod-data/server.log" {
-		t.Fatalf("LogFile = %q, want /tmp/rod-data/server.log", subCfg.LogFile)
+	if cfg.LoggerConfig.LoggerFileName != "/tmp/rod-data/server.log" {
+		t.Fatalf("LoggerFileName = %q", cfg.LoggerConfig.LoggerFileName)
 	}
-	if subCfg.OutputDir != "/tmp/rod-data/output" {
-		t.Fatalf("OutputDir = %q", subCfg.OutputDir)
+	if cfg.OutputDir != "/tmp/rod-data/output" {
+		t.Fatalf("OutputDir = %q", cfg.OutputDir)
 	}
-	if subCfg.BrowserTempDir != "/tmp/rod-data/browser" {
-		t.Fatalf("BrowserTempDir = %q", subCfg.BrowserTempDir)
+	if cfg.BrowserTempDir != "/tmp/rod-data/browser" {
+		t.Fatalf("BrowserTempDir = %q", cfg.BrowserTempDir)
 	}
-	if subCfg.UserDataDir != "/tmp/rod-data/profile" {
-		t.Fatalf("UserDataDir = %q", subCfg.UserDataDir)
+	if cfg.UserDataDir != "/tmp/rod-data/profile" {
+		t.Fatalf("UserDataDir = %q", cfg.UserDataDir)
 	}
-	if !subCfg.NoClone {
+	if !cfg.NoClone {
 		t.Fatal("derived profile should default to --no-clone")
 	}
 }
 
 func TestExplicitPathsWinOverDataDir(t *testing.T) {
-	subCfg, err := parseCommandArgs([]string{
+	cfg, err := parseCommandArgs([]string{
 		"rod-mcp",
 		"--data-dir", "/tmp/rod-data",
 		"--log-file", "/tmp/custom.log",
@@ -116,16 +94,16 @@ func TestExplicitPathsWinOverDataDir(t *testing.T) {
 	if err != nil {
 		t.Fatalf("parseCommandArgs: %v", err)
 	}
-	if subCfg.LogFile != "/tmp/custom.log" {
-		t.Fatalf("LogFile = %q, want /tmp/custom.log", subCfg.LogFile)
+	if cfg.LoggerConfig.LoggerFileName != "/tmp/custom.log" {
+		t.Fatalf("LoggerFileName = %q, want /tmp/custom.log", cfg.LoggerConfig.LoggerFileName)
 	}
-	if subCfg.OutputDir != "/tmp/rod-data/output" {
-		t.Fatalf("OutputDir = %q", subCfg.OutputDir)
+	if cfg.OutputDir != "/tmp/rod-data/output" {
+		t.Fatalf("OutputDir = %q", cfg.OutputDir)
 	}
 }
 
 func TestParseCommandArgsBrowserLogAndTempDir(t *testing.T) {
-	subCfg, err := parseCommandArgs([]string{
+	cfg, err := parseCommandArgs([]string{
 		"rod-mcp",
 		"--browser-bin-path", "helium",
 		"--browser-temp-dir", "/tmp/rod-browser",
@@ -135,32 +113,17 @@ func TestParseCommandArgsBrowserLogAndTempDir(t *testing.T) {
 	if err != nil {
 		t.Fatalf("parseCommandArgs: %v", err)
 	}
-	if subCfg.BrowserBinPath != "helium" {
-		t.Fatalf("BrowserBinPath = %q, want helium", subCfg.BrowserBinPath)
-	}
-	if subCfg.BrowserTempDir != "/tmp/rod-browser" {
-		t.Fatalf("BrowserTempDir = %q, want /tmp/rod-browser", subCfg.BrowserTempDir)
-	}
-	if subCfg.LogFile != "/tmp/rod.log" {
-		t.Fatalf("LogFile = %q, want /tmp/rod.log", subCfg.LogFile)
-	}
-	if !subCfg.NoSandbox {
-		t.Fatal("NoSandbox = false, want true")
-	}
-
-	cfg := types.DefaultConfig
-	applyOverrides(&cfg, subCfg)
 	if cfg.BrowserBinPath != "helium" {
-		t.Fatalf("cfg.BrowserBinPath = %q, want helium", cfg.BrowserBinPath)
-	}
-	if cfg.LoggerConfig.LoggerFileName != "/tmp/rod.log" {
-		t.Fatalf("cfg.LoggerFileName = %q, want /tmp/rod.log", cfg.LoggerConfig.LoggerFileName)
+		t.Fatalf("BrowserBinPath = %q, want helium", cfg.BrowserBinPath)
 	}
 	if cfg.BrowserTempDir != "/tmp/rod-browser" {
-		t.Fatalf("cfg.BrowserTempDir = %q", cfg.BrowserTempDir)
+		t.Fatalf("BrowserTempDir = %q, want /tmp/rod-browser", cfg.BrowserTempDir)
+	}
+	if cfg.LoggerConfig.LoggerFileName != "/tmp/rod.log" {
+		t.Fatalf("LoggerFileName = %q, want /tmp/rod.log", cfg.LoggerConfig.LoggerFileName)
 	}
 	if !cfg.NoSandbox {
-		t.Fatal("cfg.NoSandbox = false, want true")
+		t.Fatal("NoSandbox = false, want true")
 	}
 }
 

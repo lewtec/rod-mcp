@@ -14,12 +14,12 @@ type LoggerConfig struct {
 	// "warn"
 	// "info"
 	// "debug"
-	LoggerLevel          string `yaml:"loggerLevel" json:"loggerLevel"`
-	LoggerFileName       string `yaml:"loggerFileName" json:"loggerFileName"`
-	LoggerFileMaxSize    int    `yaml:"loggerFileMaxSize" json:"loggerFileMaxSize"`
-	LoggerFileMaxBackups int    `yaml:"loggerFileMaxBackups" json:"loggerFileMaxBackups"`
-	LoggerFileMaxAge     int    `yaml:"loggerFileMaxAge" json:"loggerFileMaxAge"`
-	LoggerPrefix         string `yaml:"loggerPrefix" json:"loggerPrefix"`
+	LoggerLevel          string `yaml:"loggerLevel" json:"loggerLevel" mapstructure:"loggerLevel"`
+	LoggerFileName       string `yaml:"loggerFileName" json:"loggerFileName" mapstructure:"loggerFileName"`
+	LoggerFileMaxSize    int    `yaml:"loggerFileMaxSize" json:"loggerFileMaxSize" mapstructure:"loggerFileMaxSize"`
+	LoggerFileMaxBackups int    `yaml:"loggerFileMaxBackups" json:"loggerFileMaxBackups" mapstructure:"loggerFileMaxBackups"`
+	LoggerFileMaxAge     int    `yaml:"loggerFileMaxAge" json:"loggerFileMaxAge" mapstructure:"loggerFileMaxAge"`
+	LoggerPrefix         string `yaml:"loggerPrefix" json:"loggerPrefix" mapstructure:"loggerPrefix"`
 }
 
 var DefaultLoggerConfig = LoggerConfig{
