@@ -23,6 +23,10 @@ type SubCfg struct {
 	CompactSnapshot bool
 	OutputDir       string
 	OmitImages      bool
+	BrowserBinPath  string
+	BrowserTempDir  string
+	LogFile         string
+	NoSandbox       bool
 }
 
 func RunCmd() (*SubCfg, error) {
@@ -94,6 +98,26 @@ func parseCommandArgs(args []string) (*SubCfg, error) {
 				Name:        "output-dir",
 				Usage:       "directory for saving screenshots and PDFs (default: OS temp dir)",
 				Destination: &subConfig.OutputDir,
+			},
+			&cli.StringFlag{
+				Name:        "browser-bin-path",
+				Usage:       "path or PATH name of the Chromium-based browser to launch",
+				Destination: &subConfig.BrowserBinPath,
+			},
+			&cli.StringFlag{
+				Name:        "browser-temp-dir",
+				Usage:       "directory for ephemeral browser profiles when --user-data-dir is not set",
+				Destination: &subConfig.BrowserTempDir,
+			},
+			&cli.StringFlag{
+				Name:        "log-file",
+				Usage:       "write logs to this file (default: stderr only)",
+				Destination: &subConfig.LogFile,
+			},
+			&cli.BoolFlag{
+				Name:        "no-sandbox",
+				Usage:       "disable the Chrome sandbox",
+				Destination: &subConfig.NoSandbox,
 			},
 			&cli.BoolFlag{
 				Name:  "omit-images",
