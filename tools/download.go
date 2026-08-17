@@ -138,9 +138,9 @@ var (
 			}
 
 			out, err := json.MarshalIndent(map[string]interface{}{
-				"filename":    result.filename,
-				"path":        finalPath,
-				"size_bytes":  fileSize,
+				"filename":     result.filename,
+				"path":         finalPath,
+				"size_bytes":   fileSize,
 				"download_url": result.url,
 			}, "", "  ")
 			if err != nil {

@@ -69,9 +69,9 @@ func TestChromeSameSiteToCDP(t *testing.T) {
 		{0, proto.NetworkCookieSameSiteNone},
 		{1, proto.NetworkCookieSameSiteLax},
 		{2, proto.NetworkCookieSameSiteStrict},
-		{3, ""},   // unknown → empty
-		{-1, ""},  // negative → empty
-		{99, ""},  // large → empty
+		{3, ""},  // unknown → empty
+		{-1, ""}, // negative → empty
+		{99, ""}, // large → empty
 	}
 	for _, tt := range tests {
 		got := chromeSameSiteToCDP(tt.input)
@@ -96,12 +96,12 @@ func TestIsValidDomainPattern(t *testing.T) {
 		{"my-domain.co.uk", true},
 		{"UPPERCASE.COM", true},
 		{"domain123.com", true},
-		{"", false},                     // empty
-		{"bad domain.com", false},       // space
-		{"evil'; DROP TABLE", false},    // SQL injection attempt
-		{"semi;colon.com", false},       // semicolon
-		{"back\\slash.com", false},      // backslash
-		{"http://example.com", false},   // colon/slash
+		{"", false},                   // empty
+		{"bad domain.com", false},     // space
+		{"evil'; DROP TABLE", false},  // SQL injection attempt
+		{"semi;colon.com", false},     // semicolon
+		{"back\\slash.com", false},    // backslash
+		{"http://example.com", false}, // colon/slash
 	}
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
@@ -169,8 +169,8 @@ func TestDeriveChromeKey_DifferentPasswords(t *testing.T) {
 func TestDecryptCookieValue_TooShort(t *testing.T) {
 	key := make([]byte, 16)
 	tests := [][]byte{
-		{},          // empty
-		{0x76},      // 1 byte
+		{},                 // empty
+		{0x76},             // 1 byte
 		{0x76, 0x31, 0x30}, // exactly 3 bytes (the prefix, nothing left)
 	}
 	for _, input := range tests {
