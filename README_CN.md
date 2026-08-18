@@ -190,7 +190,7 @@ docker run -i --rm -v ./rod-mcp.yaml:/app/rod-mcp.yaml:ro rod-mcp
 ```bash
 git clone https://github.com/aliwatters/rod-mcp.git
 cd rod-mcp
-go build -o rod-mcp .
+go build -o rod-mcp ./cmd/rod-mcp
 ```
 
 ### 前置要求

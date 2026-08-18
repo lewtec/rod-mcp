@@ -9,7 +9,7 @@ This document provides AI agents with project-specific context and guidelines fo
 | **Language** | Go 1.23+ |
 | **Framework** | [mcp-go](https://github.com/mark3labs/mcp-go) v0.20+ |
 | **Transport** | stdio (`server.ServeStdio`) |
-| **Build** | `go build -o rod-mcp` |
+| **Build** | `go build -o rod-mcp ./cmd/rod-mcp` |
 | **Test** | `go test ./...` |
 | **E2E** | `cd e2e && go test -v -timeout 120s` |
 | **Lint** | `golangci-lint run` |
@@ -31,11 +31,7 @@ This document provides AI agents with project-specific context and guidelines fo
 ### Directory Structure
 ```
 rod-mcp/
-├── main.go                 # Entry point, CLI flags
-├── cmd.go                  # Command setup and configuration
-├── server.go               # MCP server setup, tool registration by mode
-├── runner.go               # Browser lifecycle management
-├── version.go              # Version constant
+├── cmd/rod-mcp/            # Entry point, CLI flags, server, runner
 ├── tools/
 │   ├── tools.go            # Tool set composition (Text vs Vision)
 │   ├── common.go           # Shared tools: navigate, screenshot, evaluate, press

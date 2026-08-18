@@ -11,7 +11,7 @@ queues, or agent orchestration process details.
 - Runtime: follow `go.mod` for the supported Go version and dependency set.
 - MCP framework: `github.com/mark3labs/mcp-go`.
 - Browser automation: `github.com/go-rod/rod` controlling Chrome or Chromium.
-- Main entry points are `main.go`, `cmd.go`, `server.go`, and `runner.go`.
+- Main entry points are in `cmd/rod-mcp/` (`main.go`, `cmd.go`, `server.go`, `runner.go`).
 - Tool implementations live in `tools/`; shared browser context, config,
   snapshots, profiles, and embedded JavaScript live in `types/`.
 
@@ -20,7 +20,7 @@ queues, or agent orchestration process details.
 Use the same commands CI relies on when relevant:
 
 ```bash
-go build -o rod-mcp
+go build -o rod-mcp ./cmd/rod-mcp
 go vet ./...
 go test ./...
 go test -tags e2e -v -timeout 300s ./e2e/

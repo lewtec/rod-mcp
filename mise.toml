@@ -21,7 +21,7 @@ run = "go test ./..."
 
 [tasks.build]
 description = "Build rod-mcp"
-run = "go build -o rod-mcp ."
+run = "go build -o rod-mcp ./cmd/rod-mcp"
 
 [tasks.ci]
 description = "Format, vet, test, build"

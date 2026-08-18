@@ -8,7 +8,7 @@ This settles whether the repository is an MCP browser-control server or a browse
 
 ## What it does
 
-- Builds the `rod-mcp` executable. `main.go` loads `types.Config`, applies `cmd.go` flags, and starts `Runner`; `server.go` creates an MCP server and serves it with `server.ServeStdio`.
+- Builds the `rod-mcp` executable. `cmd/rod-mcp` loads `types.Config`, applies CLI flags, and starts `Runner`; the runner creates an MCP server and serves it with `server.ServeStdio`.
 - Supports local headless or visible Chrome with `--headless` and `--gui`, as well as `--cdp-endpoint` and `--chrome-debug-port` for a browser controlled through Chrome DevTools Protocol.
 - In text mode, registers the common tools plus snapshot tools such as `rod_snapshot`, `rod_click`, `rod_hover`, `rod_fill`, and `rod_selector`. Snapshot interactions can target page elements by accessibility reference, CSS selector, or accessible name and role.
 - In vision mode, registers the common tools plus `rod_vision_click` and `rod_vision_fill` for coordinate-based interaction.

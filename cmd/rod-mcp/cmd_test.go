@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -85,7 +88,7 @@ func TestEnvForcesHeadful(t *testing.T) {
 }
 
 func TestGUIServerRegistryLaunchesHeadful(t *testing.T) {
-	data, err := os.ReadFile("mcp-registry.json")
+	data, err := os.ReadFile(registryPath(t))
 	if err != nil {
 		t.Fatalf("read registry: %v", err)
 	}
@@ -179,6 +182,71 @@ func TestParseCommandArgsBrowserAndTempDir(t *testing.T) {
 	if !cfg.NoSandbox {
 		t.Fatal("NoSandbox = false, want true")
 	}
+}
+
+func TestParseCommandArgsHelp(t *testing.T) {
+	var buf bytes.Buffer
+	cfg, err := parseCommandArgsOut([]string{"rod-mcp", "--help"}, &buf)
+	if err != nil {
+		t.Fatalf("parseCommandArgsOut(--help): %v", err)
+	}
+	if cfg != nil {
+		t.Fatal("help returned a config; want nil so the server does not start")
+	}
+	out := buf.String()
+	if !strings.Contains(out, "Usage:") {
+		t.Fatalf("help output missing Usage:\n%s", out)
+	}
+	if !strings.Contains(out, "--headless") {
+		t.Fatalf("help output missing --headless:\n%s", out)
+	}
+}
+
+func TestParseCommandArgsHelpShort(t *testing.T) {
+	var buf bytes.Buffer
+	cfg, err := parseCommandArgsOut([]string{"rod-mcp", "-h"}, &buf)
+	if err != nil {
+		t.Fatalf("parseCommandArgsOut(-h): %v", err)
+	}
+	if cfg != nil {
+		t.Fatal("-h returned a config; want nil so the server does not start")
+	}
+	if !strings.Contains(buf.String(), "Usage:") {
+		t.Fatalf("-h output missing Usage:\n%s", buf.String())
+	}
+}
+
+func TestParseCommandArgsVersion(t *testing.T) {
+	prev := Version
+	Version = "test-version"
+	t.Cleanup(func() { Version = prev })
+
+	var buf bytes.Buffer
+	cfg, err := parseCommandArgsOut([]string{"rod-mcp", "--version"}, &buf)
+	if err != nil {
+		t.Fatalf("parseCommandArgsOut(--version): %v", err)
+	}
+	if cfg != nil {
+		t.Fatal("version returned a config; want nil so the server does not start")
+	}
+	if !strings.Contains(buf.String(), "test-version") {
+		t.Fatalf("version output = %q, want to contain %q", buf.String(), "test-version")
+	}
+}
+
+func registryPath(t *testing.T) string {
+	t.Helper()
+	candidates := []string{
+		"mcp-registry.json",
+		filepath.Join("..", "..", "mcp-registry.json"),
+	}
+	for _, p := range candidates {
+		if _, err := os.Stat(p); err == nil {
+			return p
+		}
+	}
+	t.Fatal("mcp-registry.json not found")
+	return ""
 }
 
 func containsArg(args []string, want string) bool {
