@@ -12,6 +12,10 @@ import (
 	"github.com/spf13/viper"
 )
 
+// guiEnvVar forces a visible browser even when --headless is in the MCP
+// launch args. MCP clients typically inherit this from the parent agent.
+const guiEnvVar = "ROD_MCP_GUI"
+
 func RunCmd() (*types.Config, error) {
 	return parseCommandArgs(os.Args)
 }
@@ -35,7 +39,7 @@ func newRootCmd() *cobra.Command {
 	fs.Bool("no-clone", false, "use --user-data-dir directly instead of cloning")
 	fs.Bool("clone-all", false, "clone the entire profile including passwords and extensions")
 	fs.Bool("headless", false, "run the browser without a window")
-	fs.Bool("gui", false, "force a visible browser window")
+	fs.Bool("gui", false, "force a visible browser window (also "+guiEnvVar+"=1; overrides --headless)")
 	fs.Bool("vision", false, "enable vision tools")
 	fs.Bool("compact-snapshot", false, "filter non-interactive elements from snapshots")
 	fs.String("output-dir", "", "screenshots and PDFs (default: <data-dir>/output)")
@@ -97,6 +101,11 @@ func parseCommandArgs(args []string) (*types.Config, error) {
 	}
 	if !headlessFlagSet(cmd) {
 		cfg.Headless = types.DefaultConfig.Headless
+	}
+	// After flags so an inherited env can flip a registry-style
+	// `args: ["--headless"]` launch to a visible window.
+	if envForcesHeadful(os.Getenv(guiEnvVar)) {
+		cfg.Headless = false
 	}
 	cfg.ServerVersion = Version
 	return &cfg, nil
@@ -198,6 +207,18 @@ func flagString(cmd *cobra.Command, name string) string {
 func mustBind(err error) {
 	if err != nil {
 		panic(err)
+	}
+}
+
+// envForcesHeadful reports whether a ROD_MCP_GUI-style value requests a
+// visible browser. Unset, empty, and common falsy values leave other
+// headless sources (flags, yaml, default) alone.
+func envForcesHeadful(v string) bool {
+	switch strings.ToLower(strings.TrimSpace(v)) {
+	case "1", "true", "yes", "on":
+		return true
+	default:
+		return false
 	}
 }
 
