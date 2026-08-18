@@ -30,6 +30,60 @@ func TestParseCommandArgsRejectsConflictingHeadlessAndGUI(t *testing.T) {
 	}
 }
 
+func TestParseCommandArgsGUIEnvForcesHeadful(t *testing.T) {
+	t.Setenv(guiEnvVar, "1")
+
+	cfg, err := parseCommandArgs([]string{"rod-mcp"})
+	if err != nil {
+		t.Fatalf("parseCommandArgs: %v", err)
+	}
+	if cfg.Headless {
+		t.Fatal("ROD_MCP_GUI=1 left config headless")
+	}
+}
+
+func TestParseCommandArgsGUIEnvOverridesHeadlessFlag(t *testing.T) {
+	t.Setenv(guiEnvVar, "true")
+
+	cfg, err := parseCommandArgs([]string{"rod-mcp", "--headless", "--compact-snapshot"})
+	if err != nil {
+		t.Fatalf("parseCommandArgs: %v", err)
+	}
+	if cfg.Headless {
+		t.Fatal("ROD_MCP_GUI=true did not override --headless")
+	}
+	if !cfg.CompactSnapshot {
+		t.Fatal("CompactSnapshot = false, want true")
+	}
+}
+
+func TestEnvForcesHeadful(t *testing.T) {
+	tests := []struct {
+		name string
+		in   string
+		want bool
+	}{
+		{name: "1", in: "1", want: true},
+		{name: "true", in: "true", want: true},
+		{name: "TRUE", in: "TRUE", want: true},
+		{name: "yes padded", in: " yes ", want: true},
+		{name: "on", in: "on", want: true},
+		{name: "empty", in: "", want: false},
+		{name: "0", in: "0", want: false},
+		{name: "false", in: "false", want: false},
+		{name: "no", in: "no", want: false},
+		{name: "off", in: "off", want: false},
+		{name: "gui", in: "gui", want: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := envForcesHeadful(tt.in); got != tt.want {
+				t.Fatalf("envForcesHeadful(%q) = %t, want %t", tt.in, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestGUIServerRegistryLaunchesHeadful(t *testing.T) {
 	data, err := os.ReadFile("mcp-registry.json")
 	if err != nil {

@@ -138,6 +138,8 @@ compact_snapshot: true
 user_data_dir: ""   # Browser profile directory
 ```
 
+`ROD_MCP_GUI=1` (also `true`/`yes`/`on`) forces a visible window after flags are parsed, so it overrides `--headless` from MCP launch args.
+
 ## Testing
 
 ### Unit Tests

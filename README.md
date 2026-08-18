@@ -84,6 +84,8 @@ Or download a [pre-built binary](https://github.com/aliwatters/rod-mcp/releases)
 
 `rod-mcp-gui` passes `--gui`, which forces `headless=false` even when the default config is absent or still says `headless: true`. The browser opens a visible window on the first navigation so you can sign in or complete 2FA, then continue automation in the same session.
 
+To keep a headless MCP launch config and still open a window, set `ROD_MCP_GUI=1` in the parent agent environment. The server inherits it and treats it like `--gui`, including when `args` already contain `--headless`.
+
 **Cursor** (`.cursor/mcp.json`):
 
 ```json
@@ -209,6 +211,8 @@ That's it. Your AI agent can now browse the web.
 ```
 --config, -c       Path to config file (default: $XDG_CONFIG_HOME/rod-mcp/rod-mcp.yaml, or ~/.config/rod-mcp/rod-mcp.yaml)
 --headless, -hl    Run browser without GUI
+--gui              Force a visible browser window
+ROD_MCP_GUI=1      Same as --gui; overrides --headless (inherited from the parent process)
 --vision, -vs      Enable vision mode (coordinate-based tools)
 --compact-snapshot  Reduce snapshot size for fewer tokens
 --output-dir       Directory for screenshots and PDFs
