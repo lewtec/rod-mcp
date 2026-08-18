@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -81,12 +82,36 @@ func bindFlags(fs *pflag.FlagSet) {
 }
 
 func parseCommandArgs(args []string) (*types.Config, error) {
+	return parseCommandArgsOut(args, nil)
+}
+
+// parseCommandArgsOut parses args via cobra Execute so --help/--version run
+// the cobra handlers. A nil config and nil error means help or version was
+// printed and the process should exit 0 without starting the server.
+func parseCommandArgsOut(args []string, out io.Writer) (*types.Config, error) {
 	viper.Reset()
 	cmd := newRootCmd()
+	if out != nil {
+		cmd.SetOut(out)
+		cmd.SetErr(out)
+	}
+	var cfg *types.Config
+	cmd.RunE = func(c *cobra.Command, _ []string) error {
+		built, err := configFromCmd(c)
+		if err != nil {
+			return err
+		}
+		cfg = built
+		return nil
+	}
 	cmd.SetArgs(args[1:])
-	if err := cmd.ParseFlags(args[1:]); err != nil {
+	if err := cmd.Execute(); err != nil {
 		return nil, fmt.Errorf("run cmd: %w", err)
 	}
+	return cfg, nil
+}
+
+func configFromCmd(cmd *cobra.Command) (*types.Config, error) {
 	if err := initViper(cmd); err != nil {
 		return nil, err
 	}

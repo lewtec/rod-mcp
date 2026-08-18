@@ -16,6 +16,9 @@ func main() {
 		slog.Error("run command", "err", err)
 		return
 	}
+	if cfg == nil {
+		return
+	}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 

@@ -113,8 +113,8 @@ if [[ ! -f "$SCRIPT_DIR/go.mod" ]]; then
     exit 1
 fi
 
-if [[ ! -f "$SCRIPT_DIR/main.go" ]]; then
-    echo "Error: main.go not found at $SCRIPT_DIR" >&2
+if [[ ! -f "$SCRIPT_DIR/cmd/rod-mcp/main.go" ]]; then
+    echo "Error: cmd/rod-mcp/main.go not found at $SCRIPT_DIR" >&2
     exit 1
 fi
 
@@ -153,7 +153,7 @@ echo "Building rod-mcp (HEAD=$GIT_HEAD)"
 if ! go build \
         -ldflags "-X main.Version=$GIT_HEAD -X main.BuildTime=$BUILD_TIME" \
         -o "$ROD_MCP_BINARY" \
-        .; then
+        ./cmd/rod-mcp; then
     echo "Error: rod-mcp build failed" >&2
     exit 1
 fi

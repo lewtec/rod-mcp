@@ -71,7 +71,7 @@ func newHarness(t *testing.T) *harness {
 	if binary == "" {
 		// Build the binary
 		binary = t.TempDir() + "/rod-mcp"
-		build := exec.Command("go", "build", "-o", binary, ".")
+		build := exec.Command("go", "build", "-o", binary, "./cmd/rod-mcp")
 		build.Dir = ".."
 		build.Stderr = os.Stderr
 		if err := build.Run(); err != nil {

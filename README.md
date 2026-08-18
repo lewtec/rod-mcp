@@ -342,7 +342,7 @@ docker compose up --build
 ```bash
 git clone https://github.com/aliwatters/rod-mcp.git
 cd rod-mcp
-go build -o rod-mcp .
+go build -o rod-mcp ./cmd/rod-mcp
 ```
 
 ### Prerequisites
@@ -354,10 +354,7 @@ go build -o rod-mcp .
 
 ```
 rod-mcp/
-├── main.go          # Entry point
-├── cmd.go           # CLI flags and commands
-├── server.go        # MCP server setup and tool registration
-├── runner.go        # Server lifecycle
+├── cmd/rod-mcp/     # Entry point, CLI flags, server, runner
 ├── tools/           # All MCP tool implementations
 │   ├── browser.go   #   evaluate, close, headers, resize, dialog
 │   ├── configure.go #   runtime reconfiguration
@@ -370,7 +367,6 @@ rod-mcp/
 │   └── vision.go    #   vision mode: coordinate click/fill
 ├── types/           # Config, context, snapshot, logging
 ├── utils/           # Shared utilities
-├── banner/          # Startup banner
 └── assets/          # Logo images
 ```
 

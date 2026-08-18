@@ -4,7 +4,7 @@
 *.dll
 *.so
 *.dylib
-rod-mcp
+/rod-mcp
 
 # Test binary, built with `go test -c`
 *.test

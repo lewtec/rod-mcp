@@ -11,7 +11,7 @@ before:
 builds:
   - id: rod-mcp
     binary: rod-mcp
-    main: .
+    main: ./cmd/rod-mcp
     env:
       - CGO_ENABLED=0
     flags:

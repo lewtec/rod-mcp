@@ -8,9 +8,9 @@ COPY . .
 
 ARG VERSION=dev
 RUN CGO_ENABLED=0 go build -ldflags "-s -w \
-    -X github.com/aliwatters/rod-mcp/banner.Version=${VERSION} \
-    -X github.com/aliwatters/rod-mcp/banner.BuildTime=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-    -o /rod-mcp .
+    -X main.Version=${VERSION} \
+    -X main.BuildTime=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+    -o /rod-mcp ./cmd/rod-mcp
 
 # Runtime stage
 FROM debian:bookworm-slim
