@@ -69,7 +69,7 @@ type Context struct {
 	// lastLaunchErr is returned while managed local Chrome launch backoff is active.
 	lastLaunchErr error
 	// instanceLock prevents multiple rod-mcp processes from silently sharing
-	// explicit browser resources such as a CDP endpoint or debug port.
+	// a CDP endpoint, debug port, or no-clone user-data-dir.
 	instanceLock *instanceLock
 
 	// snapshotLock serialises access to the cached ARIA snapshot.

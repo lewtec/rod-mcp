@@ -88,6 +88,7 @@ func launchBrowser(ctx context.Context, cfg Config) (browser *rod.Browser, clone
 // use as well as the cloned temp directory (empty string when no clone was made).
 func resolveUserDataDir(cfg Config) (userDataDir, clonedDir string, err error) {
 	if cfg.UserDataDir != "" {
+		writeProfileSource(cfg.UserDataDir, cfg.ProfileKey)
 		if cfg.NoClone {
 			// Use the profile directly — user accepted the risk.
 			slog.Warn("using profile directly; Chrome must not already have it open", "dir", cfg.UserDataDir)
