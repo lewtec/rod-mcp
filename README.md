@@ -219,12 +219,15 @@ ROD_MCP_GUI=1      Same as --gui; overrides --headless (inherited from the paren
 --omit-images      Don't include base64 images in responses
 --cdp-endpoint     Connect to an existing browser via CDP
 --chrome-debug-port  Launch Chrome with remote debugging on this port
---user-data-dir    Clone a Chrome profile directory (inherits cookies/sessions)
+--user-data-dir    Chrome profile directory (default: <data-dir>/profiles/<slug>)
+--profile-slug     Name under <data-dir>/profiles (default: hash of git origin, else cwd)
 --clone-domains    Comma-separated domains to clone cookies for (e.g. "localhost,*.clerk.dev")
---no-clone         Use profile directly instead of cloning (locks your main Chrome)
+--no-clone         Use profile directly instead of cloning (locks that profile)
 --clone-all        Clone ENTIRE profile including passwords, history, extensions (slow!)
 --no-banner        Suppress the startup banner
 ```
+
+With no `--user-data-dir`, the profile is `<data-dir>/profiles/<slug>` and is used directly (`noClone`). The slug is a hash of `git remote get-url origin`, or of the absolute working directory if there is no origin. Two checkouts of the same repo share cookies; two different projects do not. `--profile-slug` sets the directory name instead of hashing. Two servers on the same profile still contend: the second fails with a pid lock instead of Chrome's SingletonLock.
 
 ### Config File
 
@@ -240,7 +243,8 @@ proxy: ""                     # proxy URL (e.g. socks5://localhost:1080)
 compactSnapshot: false        # reduce tokens in snapshots
 outputDir: ""                 # screenshot/PDF output (default: OS temp)
 imageResponses: allow         # allow or omit inline base64 images
-userDataDir: ""               # Chrome profile to clone (e.g. ~/Library/Application Support/Google/Chrome)
+userDataDir: ""               # Chrome profile (empty: <dataDir>/profiles/<hash of git origin or cwd>)
+profileSlug: ""               # override the derived profile directory name
 cloneDomains:                 # domains to clone cookies for (empty = all cookies)
   - "localhost"
   - "*.clerk.dev"

@@ -68,6 +68,8 @@ type Config struct {
 	LaunchTimeoutMs     int               `yaml:"launchTimeoutMs" json:"launchTimeoutMs" mapstructure:"launchTimeoutMs"`
 	NavigationTimeoutMs int               `yaml:"navigationTimeoutMs" json:"navigationTimeoutMs" mapstructure:"navigationTimeoutMs"`
 	UserDataDir         string            `yaml:"userDataDir" json:"userDataDir" mapstructure:"userDataDir"`
+	ProfileSlug         string            `yaml:"profileSlug" json:"profileSlug" mapstructure:"profileSlug"`
+	ProfileKey          string            `yaml:"-" json:"-" mapstructure:"profileKey"`
 	CloneDomains        []string          `yaml:"cloneDomains" json:"cloneDomains" mapstructure:"cloneDomains"`
 	NoClone             bool              `yaml:"noClone" json:"noClone" mapstructure:"noClone"`
 	CloneAll            bool              `yaml:"cloneAll" json:"cloneAll" mapstructure:"cloneAll"`

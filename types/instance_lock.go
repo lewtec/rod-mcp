@@ -57,6 +57,9 @@ func instanceLockKey(cfg Config) string {
 	if cfg.ChromeDebugPort != "" {
 		return "debug-port:" + cfg.ChromeDebugPort
 	}
+	if cfg.NoClone && cfg.UserDataDir != "" {
+		return "profile:" + filepath.Clean(cfg.UserDataDir)
+	}
 	return ""
 }
 

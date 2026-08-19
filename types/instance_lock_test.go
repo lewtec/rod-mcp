@@ -37,6 +37,36 @@ func TestAcquireInstanceLockRejectsConcurrentDebugPort(t *testing.T) {
 	}
 }
 
+func TestAcquireInstanceLockRejectsConcurrentNoCloneProfile(t *testing.T) {
+	withInstanceLockRoot(t)
+	cfg := Config{NoClone: true, UserDataDir: "/tmp/chrome-profile"}
+
+	lock, err := acquireInstanceLock(cfg)
+	if err != nil {
+		t.Fatalf("acquireInstanceLock first: %v", err)
+	}
+	defer lock.Release()
+
+	_, err = acquireInstanceLock(cfg)
+	if err == nil {
+		t.Fatal("acquireInstanceLock second: expected contention error")
+	}
+	if !strings.Contains(err.Error(), "profile:/tmp/chrome-profile") {
+		t.Fatalf("contention error = %q, want profile key", err.Error())
+	}
+}
+
+func TestAcquireInstanceLockSkipsClonedProfile(t *testing.T) {
+	withInstanceLockRoot(t)
+	lock, err := acquireInstanceLock(Config{UserDataDir: "/tmp/chrome-profile"})
+	if err != nil {
+		t.Fatalf("acquireInstanceLock: %v", err)
+	}
+	if lock != nil {
+		t.Fatal("cloned profile returned a lock")
+	}
+}
+
 func TestAcquireInstanceLockRemovesStaleLock(t *testing.T) {
 	withInstanceLockRoot(t)
 	cfg := Config{CDPEndpoint: "http://127.0.0.1:9222"}

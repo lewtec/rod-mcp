@@ -2,6 +2,8 @@ package types
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -55,6 +57,32 @@ func TestConfigureLauncherWindowedOmitsHeadlessFlag(t *testing.T) {
 	}
 	if launcherArgsContain(l.FormatArgs(), "--headless") {
 		t.Fatalf("windowed launcher args = %v, want no --headless", l.FormatArgs())
+	}
+}
+
+func TestResolveUserDataDirWritesSourceSidecar(t *testing.T) {
+	dir := t.TempDir()
+	profile := filepath.Join(dir, "profiles", "abc123")
+	got, cloned, err := resolveUserDataDir(Config{
+		UserDataDir: profile,
+		NoClone:     true,
+		ProfileKey:  "git:example.com/foo",
+	})
+	if err != nil {
+		t.Fatalf("resolveUserDataDir: %v", err)
+	}
+	if got != profile {
+		t.Fatalf("userDataDir = %q, want %q", got, profile)
+	}
+	if cloned != "" {
+		t.Fatalf("clonedDir = %q, want empty", cloned)
+	}
+	data, err := os.ReadFile(profile + ".source")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(data) != "git:example.com/foo\n" {
+		t.Fatalf("sidecar = %q", data)
 	}
 }
 

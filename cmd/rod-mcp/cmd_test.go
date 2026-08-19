@@ -3,10 +3,13 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/aliwatters/rod-mcp/types"
 )
 
 type registryEntry struct {
@@ -118,6 +121,14 @@ func TestGUIServerRegistryLaunchesHeadful(t *testing.T) {
 }
 
 func TestDataDirDerivesLogProfileOutputAndBrowser(t *testing.T) {
+	stubGitOrigin(t, "")
+	dir := t.TempDir()
+	t.Chdir(dir)
+	abs, err := filepath.Abs(".")
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	cfg, err := parseCommandArgs([]string{"rod-mcp", "--data-dir", "/tmp/rod-data"})
 	if err != nil {
 		t.Fatalf("parseCommandArgs: %v", err)
@@ -131,12 +142,93 @@ func TestDataDirDerivesLogProfileOutputAndBrowser(t *testing.T) {
 	if cfg.BrowserTempDir != "/tmp/rod-data/browser" {
 		t.Fatalf("BrowserTempDir = %q", cfg.BrowserTempDir)
 	}
-	if cfg.UserDataDir != "/tmp/rod-data/profile" {
-		t.Fatalf("UserDataDir = %q", cfg.UserDataDir)
+	wantKey := "cwd:" + filepath.Clean(abs)
+	wantDir := filepath.Join("/tmp/rod-data", "profiles", types.HashedProfileName(wantKey))
+	if cfg.UserDataDir != wantDir {
+		t.Fatalf("UserDataDir = %q, want %q", cfg.UserDataDir, wantDir)
+	}
+	if cfg.ProfileKey != wantKey {
+		t.Fatalf("ProfileKey = %q, want %q", cfg.ProfileKey, wantKey)
 	}
 	if !cfg.NoClone {
 		t.Fatal("derived profile should default to --no-clone")
 	}
+}
+
+func TestProfileSlugFlag(t *testing.T) {
+	cfg, err := parseCommandArgs([]string{"rod-mcp", "--data-dir", "/tmp/rod-data", "--profile-slug", "apple-music"})
+	if err != nil {
+		t.Fatalf("parseCommandArgs: %v", err)
+	}
+	if cfg.UserDataDir != "/tmp/rod-data/profiles/apple-music" {
+		t.Fatalf("UserDataDir = %q", cfg.UserDataDir)
+	}
+	if cfg.ProfileKey != "slug:apple-music" {
+		t.Fatalf("ProfileKey = %q", cfg.ProfileKey)
+	}
+	if !cfg.NoClone {
+		t.Fatal("derived profile should default to --no-clone")
+	}
+}
+
+func TestProfileSlugSanitizes(t *testing.T) {
+	cfg, err := parseCommandArgs([]string{"rod-mcp", "--data-dir", "/tmp/rod-data", "--profile-slug", "Foo Bar/baz"})
+	if err != nil {
+		t.Fatalf("parseCommandArgs: %v", err)
+	}
+	if cfg.UserDataDir != "/tmp/rod-data/profiles/Foo-Bar-baz" {
+		t.Fatalf("UserDataDir = %q", cfg.UserDataDir)
+	}
+}
+
+func TestProfileSlugRejectsEmpty(t *testing.T) {
+	_, err := parseCommandArgs([]string{"rod-mcp", "--profile-slug", "..."})
+	if !errors.Is(err, types.ErrInvalidProfileSlug) {
+		t.Fatalf("parseCommandArgs: %v, want %v", err, types.ErrInvalidProfileSlug)
+	}
+}
+
+func TestGitOriginDerivesStableProfile(t *testing.T) {
+	stubGitOrigin(t, "git@github.com:lewtec/rod-mcp.git")
+	cfg, err := parseCommandArgs([]string{"rod-mcp", "--data-dir", "/tmp/rod-data"})
+	if err != nil {
+		t.Fatalf("parseCommandArgs: %v", err)
+	}
+	wantKey := "git:github.com/lewtec/rod-mcp"
+	wantDir := filepath.Join("/tmp/rod-data", "profiles", types.HashedProfileName(wantKey))
+	if cfg.UserDataDir != wantDir {
+		t.Fatalf("UserDataDir = %q, want %q", cfg.UserDataDir, wantDir)
+	}
+	if cfg.ProfileKey != wantKey {
+		t.Fatalf("ProfileKey = %q, want %q", cfg.ProfileKey, wantKey)
+	}
+}
+
+func TestExplicitUserDataDirSkipsSlug(t *testing.T) {
+	cfg, err := parseCommandArgs([]string{
+		"rod-mcp",
+		"--user-data-dir", "/tmp/chrome",
+		"--profile-slug", "ignored",
+	})
+	if err != nil {
+		t.Fatalf("parseCommandArgs: %v", err)
+	}
+	if cfg.UserDataDir != "/tmp/chrome" {
+		t.Fatalf("UserDataDir = %q, want /tmp/chrome", cfg.UserDataDir)
+	}
+	if cfg.ProfileKey != "" {
+		t.Fatalf("ProfileKey = %q, want empty", cfg.ProfileKey)
+	}
+	if cfg.NoClone {
+		t.Fatal("explicit --user-data-dir should clone by default")
+	}
+}
+
+func stubGitOrigin(t *testing.T, remote string) {
+	t.Helper()
+	orig := types.GitOrigin
+	types.GitOrigin = func(string) string { return remote }
+	t.Cleanup(func() { types.GitOrigin = orig })
 }
 
 func TestExplicitPathsWinOverDataDir(t *testing.T) {

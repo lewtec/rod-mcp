@@ -35,7 +35,8 @@ func newRootCmd() *cobra.Command {
 	fs.String("data-dir", "", "base directory for profile, browser temp, and output (default: user cache/rod-mcp)")
 	fs.String("cdp-endpoint", "", "control a running browser by CDP")
 	fs.String("chrome-debug-port", "", "launch Chrome with --remote-debugging-port (e.g. 9222)")
-	fs.String("user-data-dir", "", "Chrome profile directory (default: <data-dir>/profile)")
+	fs.String("user-data-dir", "", "Chrome profile directory (default: <data-dir>/profiles/<slug>)")
+	fs.String("profile-slug", "", "name for the derived profile directory (default: hash of git origin or cwd)")
 	fs.String("clone-domains", "", "comma-separated domains to clone cookies for")
 	fs.Bool("no-clone", false, "use --user-data-dir directly instead of cloning")
 	fs.Bool("clone-all", false, "clone the entire profile including passwords and extensions")
@@ -69,6 +70,7 @@ func bindFlags(fs *pflag.FlagSet) {
 	mustBind(viper.BindPFlag("cdpEndpoint", fs.Lookup("cdp-endpoint")))
 	mustBind(viper.BindPFlag("chromeDebugPort", fs.Lookup("chrome-debug-port")))
 	mustBind(viper.BindPFlag("userDataDir", fs.Lookup("user-data-dir")))
+	mustBind(viper.BindPFlag("profileSlug", fs.Lookup("profile-slug")))
 	mustBind(viper.BindPFlag("cloneDomains", fs.Lookup("clone-domains")))
 	mustBind(viper.BindPFlag("noClone", fs.Lookup("no-clone")))
 	mustBind(viper.BindPFlag("cloneAll", fs.Lookup("clone-all")))
@@ -118,7 +120,9 @@ func configFromCmd(cmd *cobra.Command) (*types.Config, error) {
 	if err := resolveAliases(cmd); err != nil {
 		return nil, err
 	}
-	derivePaths(cmd)
+	if err := derivePaths(cmd); err != nil {
+		return nil, err
+	}
 
 	cfg := types.DefaultConfig
 	if err := viper.Unmarshal(&cfg); err != nil {
@@ -183,18 +187,45 @@ func resolveAliases(cmd *cobra.Command) error {
 	return nil
 }
 
-func derivePaths(cmd *cobra.Command) {
+func derivePaths(cmd *cobra.Command) error {
 	dataDir := viper.GetString("dataDir")
 	if dataDir == "" {
 		dataDir = defaultDataDir()
 		viper.Set("dataDir", dataDir)
 	}
-	setDerivedDefault(cmd, "user-data-dir", "userDataDir", filepath.Join(dataDir, "profile"))
+	if err := deriveUserDataDir(cmd, dataDir); err != nil {
+		return err
+	}
 	setDerivedDefault(cmd, "browser-temp-dir", "browserTempDir", filepath.Join(dataDir, "browser"))
 	setDerivedDefault(cmd, "output-dir", "outputDir", filepath.Join(dataDir, "output"))
 	if !cmd.Flags().Changed("user-data-dir") && !cmd.Flags().Changed("no-clone") && !viper.GetBool("cloneAll") {
 		viper.Set("noClone", true)
 	}
+	return nil
+}
+
+func deriveUserDataDir(cmd *cobra.Command, dataDir string) error {
+	if cmd.Flags().Changed("user-data-dir") {
+		return nil
+	}
+	if viper.GetString("userDataDir") != "" {
+		return nil
+	}
+	slug := viper.GetString("profileSlug")
+	var key string
+	if slug != "" {
+		cleaned, err := types.SanitizeProfileSlug(slug)
+		if err != nil {
+			return err
+		}
+		slug = cleaned
+		key = "slug:" + slug
+	} else {
+		key, slug = types.DefaultProfileIdentity()
+	}
+	viper.Set("userDataDir", filepath.Join(dataDir, "profiles", slug))
+	viper.Set("profileKey", key)
+	return nil
 }
 
 func setDerivedDefault(cmd *cobra.Command, flagName, viperKey, value string) {
